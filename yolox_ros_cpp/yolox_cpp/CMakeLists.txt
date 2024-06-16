@@ -37,13 +37,11 @@ set(ENABLE_TFLITE OFF)
 
 if(YOLOX_USE_OPENVINO)
   find_package(OpenVINO REQUIRED)
-  find_package(InferenceEngine REQUIRED)
-  find_package(ngraph REQUIRED)
 
   set(ENABLE_OPENVINO ON)
   set(TARGET_SRC src/yolox_openvino.cpp)
-  set(TARGET_LIBS InferenceEngine ngraph)
-  set(TARGET_DPENDENCIES OpenVINO InferenceEngine ngraph)
+  set(TARGET_LIBS openvino::runtime)
+  set(TARGET_DPENDENCIES OpenVINO)
 endif()
 
 if(YOLOX_USE_TENSORRT)
