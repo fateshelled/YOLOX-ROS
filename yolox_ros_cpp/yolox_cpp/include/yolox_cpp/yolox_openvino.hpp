@@ -7,7 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <opencv2/opencv.hpp>
-#include <inference_engine.hpp>
+#include <openvino/openvino.hpp>
 
 #include "core.hpp"
 #include "coco_names.hpp"
@@ -22,11 +22,9 @@ namespace yolox_cpp{
 
         private:
             std::string device_name_;
-            std::string input_name_;
-            std::string output_name_;
-            InferenceEngine::CNNNetwork network_;
-            InferenceEngine::ExecutableNetwork executable_network_;
-            InferenceEngine::InferRequest infer_request_;
+            std::vector<float> blob_;
+            ov::Shape input_shape_;
+            ov::InferRequest infer_request_;
     };
 }
 
