@@ -64,6 +64,8 @@ if(YOLOX_USE_TFLITE)
   set(INCLUDES ${INCLUDES} ${TFLITE_INCLUDE_DIR})
   set(INCLUDES ${INCLUDES} ${ABSEIL_CPP_ICLUDE_DIR})
   set(INCLUDES ${INCLUDES} ${FLATBUFFERS_INCLUDE_DIR})
+  set(TARGET_LIBS ${TFLITE_LIB_PATH}/libtensorflow-lite.so)
+  target_include_directories(yolox_cpp PUBLIC ${INCLUDES})
 endif()
 
 # onnxruntime
@@ -71,6 +73,7 @@ if(YOLOX_USE_ONNXRUNTIME)
   find_library(ONNXRUNTIME NAMES onnxruntime)
   set(ENABLE_ONNXRUNTIME ON)
   set(TARGET_SRC src/yolox_onnxruntime.cpp)
+  set(TARGET_LIBS onnxruntime)
 endif()
 
 configure_file(
@@ -81,23 +84,12 @@ configure_file(
 ament_auto_add_library(yolox_cpp SHARED ${TARGET_SRC})
 ament_target_dependencies(yolox_cpp ${TARGET_DPENDENCIES})
 ament_export_dependencies(${TARGET_DPENDENCIES})
-
-
-if (YOLOX_USE_TENSORRT)
-  target_link_libraries(yolox_cpp ${TARGET_LIBS})
-endif()
+target_link_libraries(yolox_cpp ${TARGET_LIBS})
 
 if (YOLOX_USE_TFLITE)
-  target_include_directories(yolox_cpp PUBLIC ${INCLUDES})
-  target_link_libraries(yolox_cpp ${TFLITE_LIB_PATH}/libtensorflow-lite.so)
   ament_export_include_directories(${INCLUDES})
   install(DIRECTORY ${TFLITE_LIB_PATH}/ DESTINATION lib)
 endif()
-
-if (YOLOX_USE_ONNXRUNTIME)
-  target_link_libraries(yolox_cpp onnxruntime)
-endif()
-
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
