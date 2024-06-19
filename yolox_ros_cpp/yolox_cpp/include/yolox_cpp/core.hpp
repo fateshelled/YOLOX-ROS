@@ -8,9 +8,7 @@ namespace yolox_cpp
 /**
  * @brief Define names based depends on Unicode path support
  */
-#define tcout std::cout
 #define file_name_t std::string
-#define imread_t cv::imread
 
     struct Object
     {
@@ -24,17 +22,21 @@ namespace yolox_cpp
         int grid0;
         int grid1;
         int stride;
+        GridAndStride(const int grid0_, const int grid1_, const int stride_)
+            : grid0(grid0_), grid1(grid1_), stride(stride_)
+        {
+        }
     };
 
     class AbcYoloX
     {
     public:
         AbcYoloX() {}
-        AbcYoloX(float nms_th = 0.45, float conf_th = 0.3,
-                 std::string model_version = "0.1.1rc0",
-                 int num_classes = 80, bool p6 = false)
+        AbcYoloX(const float nms_th = 0.45, const float conf_th = 0.3,
+                 const std::string &model_version = "0.1.1rc0",
+                 const int num_classes = 80, const bool p6 = false)
             : nms_thresh_(nms_th), bbox_conf_thresh_(conf_th),
-              model_version_(model_version), num_classes_(num_classes), p6_(p6)
+              num_classes_(num_classes), p6_(p6), model_version_(model_version)
         {
         }
         virtual std::vector<Object> inference(const cv::Mat &frame) = 0;
@@ -55,10 +57,10 @@ namespace yolox_cpp
 
         cv::Mat static_resize(const cv::Mat &img)
         {
-            float r = std::min(input_w_ / (img.cols * 1.0), input_h_ / (img.rows * 1.0));
+            const float r = std::min(input_w_ / (img.cols * 1.0), input_h_ / (img.rows * 1.0));
             // r = std::min(r, 1.0f);
-            int unpad_w = r * img.cols;
-            int unpad_h = r * img.rows;
+            const int unpad_w = r * img.cols;
+            const int unpad_h = r * img.rows;
             cv::Mat re(unpad_h, unpad_w, CV_8UC3);
             cv::resize(img, re, re.size());
             cv::Mat out(input_h_, input_w_, CV_8UC3, cv::Scalar(114, 114, 114));
@@ -69,9 +71,9 @@ namespace yolox_cpp
         // for NCHW
         void blobFromImage(const cv::Mat &img, float *blob_data)
         {
-            size_t channels = 3;
-            size_t img_h = img.rows;
-            size_t img_w = img.cols;
+            const size_t channels = 3;
+            const size_t img_h = img.rows;
+            const size_t img_w = img.cols;
             if (this->model_version_ == "0.1.0")
             {
                 for (size_t c = 0; c < channels; ++c)
@@ -104,9 +106,9 @@ namespace yolox_cpp
         // for NHWC
         void blobFromImage_nhwc(const cv::Mat &img, float *blob_data)
         {
-            size_t channels = 3;
-            size_t img_h = img.rows;
-            size_t img_w = img.cols;
+            const size_t channels = 3;
+            const size_t img_h = img.rows;
+            const size_t img_w = img.cols;
             if (this->model_version_ == "0.1.0")
             {
                 for (size_t i = 0; i < img_h * img_w; ++i)
@@ -134,19 +136,19 @@ namespace yolox_cpp
         {
             for (auto stride : strides)
             {
-                int num_grid_w = target_w / stride;
-                int num_grid_h = target_h / stride;
+                const int num_grid_w = target_w / stride;
+                const int num_grid_h = target_h / stride;
                 for (int g1 = 0; g1 < num_grid_h; ++g1)
                 {
                     for (int g0 = 0; g0 < num_grid_w; ++g0)
                     {
-                        grid_strides.push_back((GridAndStride){g0, g1, stride});
+                        grid_strides.emplace_back(g0, g1, stride);
                     }
                 }
             }
         }
 
-        void generate_yolox_proposals(const std::vector<GridAndStride> grid_strides, const float *feat_ptr, const float prob_threshold, std::vector<Object> &objects)
+        void generate_yolox_proposals(const std::vector<GridAndStride> &grid_strides, const float *feat_ptr, const float prob_threshold, std::vector<Object> &objects)
         {
             const int num_anchors = grid_strides.size();
 
@@ -158,13 +160,13 @@ namespace yolox_cpp
 
                 const int basic_pos = anchor_idx * (num_classes_ + 5);
 
-                float box_objectness = feat_ptr[basic_pos + 4];
+                const float box_objectness = feat_ptr[basic_pos + 4];
                 int class_id = 0;
                 float max_class_score = 0.0;
                 for (int class_idx = 0; class_idx < num_classes_; ++class_idx)
                 {
-                    float box_cls_score = feat_ptr[basic_pos + 5 + class_idx];
-                    float box_prob = box_objectness * box_cls_score;
+                    const float box_cls_score = feat_ptr[basic_pos + 5 + class_idx];
+                    const float box_prob = box_objectness * box_cls_score;
                     if (box_prob > max_class_score)
                     {
                         class_id = class_idx;
@@ -176,12 +178,12 @@ namespace yolox_cpp
                     // yolox/models/yolo_head.py decode logic
                     //  outputs[..., :2] = (outputs[..., :2] + grids) * strides
                     //  outputs[..., 2:4] = torch.exp(outputs[..., 2:4]) * strides
-                    float x_center = (feat_ptr[basic_pos + 0] + grid0) * stride;
-                    float y_center = (feat_ptr[basic_pos + 1] + grid1) * stride;
-                    float w = exp(feat_ptr[basic_pos + 2]) * stride;
-                    float h = exp(feat_ptr[basic_pos + 3]) * stride;
-                    float x0 = x_center - w * 0.5f;
-                    float y0 = y_center - h * 0.5f;
+                    const float x_center = (feat_ptr[basic_pos + 0] + grid0) * stride;
+                    const float y_center = (feat_ptr[basic_pos + 1] + grid1) * stride;
+                    const float w = exp(feat_ptr[basic_pos + 2]) * stride;
+                    const float h = exp(feat_ptr[basic_pos + 3]) * stride;
+                    const float x0 = x_center - w * 0.5f;
+                    const float y0 = y_center - h * 0.5f;
 
                     Object obj;
                     obj.rect.x = x0;
@@ -197,7 +199,7 @@ namespace yolox_cpp
 
         float intersection_area(const Object &a, const Object &b)
         {
-            cv::Rect_<float> inter = a.rect & b.rect;
+            const cv::Rect_<float> inter = a.rect & b.rect;
             return inter.area();
         }
 
@@ -260,8 +262,8 @@ namespace yolox_cpp
                     const Object &b = faceobjects[picked[j]];
 
                     // intersection over union
-                    float inter_area = intersection_area(a, b);
-                    float union_area = areas[i] + areas[picked[j]] - inter_area;
+                    const float inter_area = intersection_area(a, b);
+                    const float union_area = areas[i] + areas[picked[j]] - inter_area;
                     // float IoU = inter_area / union_area
                     if (inter_area / union_area > nms_threshold)
                         keep = 0;
@@ -272,7 +274,7 @@ namespace yolox_cpp
             }
         }
 
-        void decode_outputs(const float *prob, const std::vector<GridAndStride> grid_strides,
+        void decode_outputs(const float *prob, const std::vector<GridAndStride> &grid_strides,
                             std::vector<Object> &objects, const float bbox_conf_thresh,
                             const float scale, const int img_w, const int img_h)
         {
