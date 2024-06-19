@@ -36,6 +36,7 @@ namespace yolox_cpp{
             YoloXTensorRT(file_name_t path_to_engine, int device=0,
                           float nms_th=0.45, float conf_th=0.3, std::string model_version="0.1.1rc0",
                           int num_classes=80, bool p6=false);
+            ~YoloXTensorRT();
             std::vector<Object> inference(const cv::Mat& frame) override;
 
         private:
@@ -49,6 +50,7 @@ namespace yolox_cpp{
             int output_size_;
             const int inputIndex_ = 0;
             const int outputIndex_ = 1;
+            void *inference_buffers_[2];
 
     };
 } // namespace yolox_cpp
