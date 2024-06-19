@@ -39,6 +39,6 @@ namespace yolox_ros_cpp{
         rclcpp::Publisher<bboxes_ex_msgs::msg::BoundingBoxes>::SharedPtr pub_bboxes_;
         image_transport::Publisher pub_image_;
 
-        bboxes_ex_msgs::msg::BoundingBoxes objects_to_bboxes(cv::Mat, std::vector<yolox_cpp::Object>, std_msgs::msg::Header);
+        bboxes_ex_msgs::msg::BoundingBoxes objects_to_bboxes(const cv::Mat&, const std::vector<yolox_cpp::Object>&, const std_msgs::msg::Header&);
     };
 }

@@ -131,15 +131,17 @@ namespace yolox_ros_cpp
         pub_img = cv_bridge::CvImage(img->header, "bgr8", frame).toImageMsg();
         this->pub_image_.publish(pub_img);
     }
-    bboxes_ex_msgs::msg::BoundingBoxes YoloXNode::objects_to_bboxes(cv::Mat frame, std::vector<yolox_cpp::Object> objects, std_msgs::msg::Header header)
+
+    bboxes_ex_msgs::msg::BoundingBoxes YoloXNode::objects_to_bboxes(
+        const cv::Mat &frame, const std::vector<yolox_cpp::Object> &objects, const std_msgs::msg::Header &header)
     {
         bboxes_ex_msgs::msg::BoundingBoxes boxes;
         boxes.header = header;
-        for (auto obj : objects)
+        for (const auto &obj : objects)
         {
             bboxes_ex_msgs::msg::BoundingBox box;
             box.probability = obj.prob;
-            box.class_id = yolox_cpp::COCO_CLASSES[obj.label];
+            box.class_id = this->class_names_[obj.label];
             box.xmin = obj.rect.x;
             box.ymin = obj.rect.y;
             box.xmax = (obj.rect.x + obj.rect.width);
