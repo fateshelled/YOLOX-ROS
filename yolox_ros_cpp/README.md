@@ -2,6 +2,7 @@
 
 ## Requirements
 - ROS2 Humble
+  - ros-humble-generate-parameter-library
 - OpenCV 4.x
 - OpenVINO 2021.*
 - TensorRT 8.x *
@@ -60,7 +61,7 @@ cd ~/ros2_ws
 - Download model using the following script.
   - https://github.com/PINTO0309/PINTO_model_zoo/blob/main/132_YOLOX/download_nano.sh
   - `curl -s https://raw.githubusercontent.com/PINTO0309/PINTO_model_zoo/main/132_YOLOX/download_nano.sh | bash`
-  
+
 - ONNX model copy to weight dir
   - `cp resouces_new/saved_model_yolox_tiny_480x640/yolox_tiny_480x640.onnx ./src/YOLOX-ROS/weights/onnx/`
 
