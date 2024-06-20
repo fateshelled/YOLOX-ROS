@@ -46,14 +46,16 @@ endif()
 
 if(YOLOX_USE_TENSORRT)
   find_package(CUDA REQUIRED)
-  find_library(NVINFER  NAMES nvinfer REQUIRED)
-  find_library(NVINFERPLUGIN NAMES nvinfer_plugin  REQUIRED)
-  find_library(NVPARSERS NAMES nvparsers REQUIRED)
-  find_library(NVONNXPARSER NAMES nvonnxparser REQUIRED)
+  if (NOT CUDA_TOOLKIT_ROOT_DIR)
+    set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
+  endif()
+  find_path(TENSORRT_INCLUDE_DIR NvInfer.h
+    HINTS ${TENSORRT_ROOT} ${CUDA_TOOLKIT_ROOT_DIR}
+    PATH_SUFFIXES include)
 
   set(ENABLE_TENSORRT ON)
   set(TARGET_SRC src/yolox_tensorrt.cpp)
-  set(TARGET_LIBS nvinfer nvinfer_plugin nvparsers nvonnxparser)
+  set(TARGET_LIBS nvinfer nvinfer_plugin)
   set(TARGET_DPENDENCIES CUDA)
 endif()
 
