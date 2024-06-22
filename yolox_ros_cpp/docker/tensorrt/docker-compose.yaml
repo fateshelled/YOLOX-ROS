@@ -5,8 +5,8 @@ services:
         build:
             context: .
             args:
-                - TENSORRT_VERSION=8.6
-                - CUDNN_VERSION=8.8
+                - TENSORRT_VERSION=10.1
+                - CUDNN_VERSION=9.2
                 - PYTHON_VERSION=3.10
         network_mode: host
         runtime: nvidia
@@ -20,4 +20,3 @@ services:
         working_dir: /root/ros2_ws
         tty: true
         command: bash
-
