@@ -1,10 +1,11 @@
-FROM openvino/ubuntu22_dev:2023.0.1
+FROM ubuntu:22.04
 
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 ENV DEBIAN_FRONTEND=noninteractive
 
 USER root
 
-# Install ROS2
 RUN apt update && apt install locales && \
     locale-gen en_US en_US.UTF-8 && \
     update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && \
@@ -13,12 +14,21 @@ RUN apt update && apt install locales && \
 ENV LANG=en_US.UTF-8
 
 RUN apt update && \
-    apt install -y git wget curl gnupg2 lsb-release && \
-    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    apt install -y git wget curl gnupg2 lsb-release
+
+# ROS
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
-    sed -i -e 's/ubuntu .* main/ubuntu jammy main/g' /etc/apt/sources.list.d/ros2.list && \
-    apt update && \
-    apt install -y ros-dev-tools \
+    sed -i -e 's/ubuntu .* main/ubuntu jammy main/g' /etc/apt/sources.list.d/ros2.list
+# INTEL OPENVINO
+RUN wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB && \
+    apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB && \
+    echo "deb https://apt.repos.intel.com/openvino/2024 ubuntu22 main" | tee /etc/apt/sources.list.d/intel-openvino-2024.list
+
+# install ros and openvino
+RUN apt update && \
+    apt install -y openvino-2024.2.0 \
+                    ros-dev-tools \
                     ros-humble-cv-bridge \
                     ros-humble-generate-parameter-library \
                     ros-humble-parameter-traits \

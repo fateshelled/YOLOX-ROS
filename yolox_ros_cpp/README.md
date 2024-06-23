@@ -4,11 +4,11 @@
 - ROS2 Humble
   - ros-humble-generate-parameter-library
 - OpenCV 4.x
-- OpenVINO 2021.*
-- TensorRT 8.x *
+- OpenVINO 2024.*
+- TensorRT 10.x *
 - ONNXRuntime *
 - Tensorflow Lite *
-- **CUDA 11**
+- **CUDA 12**
 
 ※ Either one of OpenVINO or TensorRT or ONNXRuntime or Tensorflow Lite is required.
 
@@ -17,11 +17,6 @@
 ※ Tensorflow Lite support XNNPACK Delegate only.
 
 ※ Tensorflow Lite support float model and does not support integer model.
-
-※ Model convert script is not supported OpenVINO 2022.*
-
-※ Don't use CUDA 12
-
 
 ## Clone YOLOX-ROS
 ```bash
@@ -45,7 +40,7 @@ cd ~/ros2_ws
 
 # Download onnx model and convert to TensorRT engine.
 # 1st arg is model name. 2nd is workspace size.
-./src/YOLOX-ROS/weights/tensorrt/convert.bash yolox_tiny 16
+./src/YOLOX-ROS/weights/tensorrt/convert.bash yolox_tiny
 ```
 
 #### Tensorflow Lite
