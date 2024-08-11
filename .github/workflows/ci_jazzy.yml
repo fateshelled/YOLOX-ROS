@@ -24,11 +24,13 @@ jobs:
     steps:
       - name: Install OpenVINO
         run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           echo "deb https://apt.repos.intel.com/openvino/2024 ubuntu24 main" | sudo tee /etc/apt/sources.list.d/intel-openvino-2024.list
           sudo apt-get update
-          sudo apt install openvino-2024.3.0
+          sudo apt install -y openvino-2024.3.0
       - uses: actions/checkout@v4
       - uses: ros-tooling/setup-ros@v0.7
         with:
