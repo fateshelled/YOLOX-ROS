@@ -29,8 +29,10 @@ jobs:
           echo "deb https://apt.repos.intel.com/openvino/2024 ubuntu24 main" | sudo tee /etc/apt/sources.list.d/intel-openvino-2024.list
           sudo apt-get update
           sudo apt install openvino-2024.3.0
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: ${{ matrix.ros_distribution }}
       - name: Build and Test
         uses: ros-tooling/action-ros-ci@v0.3
         with:
