@@ -2,8 +2,9 @@
 
 ![](https://img.shields.io/github/stars/Ar-Ray-code/YOLOX-ROS)
 
-[![ci_iron](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_iron.yml/badge.svg)](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_iron.yml)
-[![ci_jazzy](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_jazzy.yml/badge.svg)](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_jazzy.yml)
+[![iron](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_iron.yml/badge.svg)](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_iron.yml)
+[![jazzy](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_jazzy.yml/badge.svg)](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_jazzy.yml)
+[![rolling](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_rolling.yml/badge.svg)](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_rolling.yml)
 
 
 [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) + ROS2 Iron demo
