@@ -1,12 +1,16 @@
 # YOLOX-ROS
 
-[YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) + ROS2 Humble demo
+[YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) + ROS2 Iron demo
 
 ![yolox_s_result](https://github.com/Ar-Ray-code/RenderTexture2ROS2Image/blob/main/images_for_readme/unity-demo.gif?raw=true)
 
 <div align="center">🔼 Unity + YOLOX-ROS Demo</div>
 
 ## Supported List
+
+![Iron](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/iron.yml/badge.svg)
+
+![Jazzy](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/jazzy.yml/badge.svg)
 
 
 | Base            | ROS2 C++ |

@@ -1,8 +1,8 @@
 # YOLOX-ROS-CPP
 
 ## Requirements
-- ROS2 Humble
-  - ros-humble-generate-parameter-library
+- ROS2 Iron
+  - ros-iron-generate-parameter-library
 - OpenCV 4.x
 - OpenVINO 2024.*
 - TensorRT 10.x *
@@ -21,7 +21,7 @@
 ## Clone YOLOX-ROS
 ```bash
 cd ~/ros2_ws/src
-git clone --recursive https://github.com/Ar-Ray-code/YOLOX-ROS -b humble
+git clone --recursive https://github.com/Ar-Ray-code/YOLOX-ROS -b iron
 ```
 
 ## Model Convert or Download

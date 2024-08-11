@@ -1,9 +1,9 @@
-name: ci_humble
+name: ci_iron
 
 on:
   push:
     branches:
-      - "humble"
+      - "iron"
   pull_request:
     types: [opened, synchronize, labeled]
 
@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04]
-        ros_distribution: [humble]
+        ros_distribution: [iron]
     steps:
       - name: Install OpenVINO
         run: |
