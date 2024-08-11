@@ -1,5 +1,11 @@
 # YOLOX-ROS
 
+![](https://img.shields.io/github/stars/Ar-Ray-code/YOLOX-ROS)
+
+[![ci_iron](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_iron.yml/badge.svg)](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_iron.yml)
+[![ci_jazzy](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_jazzy.yml/badge.svg)](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/ci_jazzy.yml)
+
+
 [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) + ROS2 Iron demo
 
 ![yolox_s_result](https://github.com/Ar-Ray-code/RenderTexture2ROS2Image/blob/main/images_for_readme/unity-demo.gif?raw=true)
@@ -7,11 +13,6 @@
 <div align="center">🔼 Unity + YOLOX-ROS Demo</div>
 
 ## Supported List
-
-![Iron](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/iron.yml/badge.svg)
-
-![Jazzy](https://github.com/Ar-Ray-code/YOLOX-ROS/actions/workflows/jazzy.yml/badge.svg)
-
 
 | Base            | ROS2 C++ |
 | --------------- | -------- |
@@ -41,15 +42,11 @@ Check [this URL](./yolox_ros_cpp/README.md).
 
   ※ If you want to use `darknet_ros_msgs` , replace `bboxes_ex_msgs` with `darknet_ros_msgs`.
 
-![yolox_topic](images_for_readme/yolox_topic.png)
+<!-- ![yolox_topic](images_for_readme/yolox_topic.png) -->
 
 <br>
 
-## Parameters
-
-- Check launch files.
-
-<br>
+##
 
 ## Reference
 
@@ -69,15 +66,9 @@ Check [this URL](./yolox_ros_cpp/README.md).
 <br>
 
 ## Contributors
-- [Ar-Ray](https://github.com/Ar-Ray-code)
-- [fateshelled](https://github.com/fateshelled)
-- [Kazuhito00](https://github.com/Kazuhito00)
-- [swiftfile](https://github.com/swiftfile)
+
+<a href="https://github.com/Ar-Ray-code/YOLOX-ROS/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Ar-Ray-code/YOLOX-ROS" />
+</a>
 
 <br>
-
-## About writer
-
-- Ar-Ray : Japanese student.
-- Blog (Japanese) : https://ar-ray.hatenablog.com/
-- Twitter : https://twitter.com/Ray255Ar
