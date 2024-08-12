@@ -195,8 +195,7 @@ ros2 launch yolox_ros_cpp yolox_tflite.launch.py
   - See [here](https://github.com/fateshelled/YOLOX-ROS/blob/dev_cpp/yolox_ros_cpp/yolox_ros_cpp/labels/coco_names.txt) for label format.
 - `num_classes`: 80
 - `model_version`: 0.1.1rc0
-- `openvino/device`: CPU
-- `conf`: 0.3
+- `openvino/device`: AUTO
 - `nms`: 0.45
 - `imshow_isshow`: true
 - `src_image_topic_name`: /image_raw

@@ -6,7 +6,7 @@ yolox_parameters:
   model_path:
     type: string
     description: "Path to the model file."
-    default_value: "./src/YOLOX-ROS/weights/tflite/model.tflite"
+    default_value: "example.onnx"
   class_labels_path:
     type: string
     description: "Path to the class labels file."
@@ -38,9 +38,9 @@ yolox_parameters:
   openvino_device:
     type: string
     description: "OpenVINO device."
-    default_value: "CPU"
+    default_value: "AUTO"
     validation: {
-      one_of<>: [["CPU", "GPU", "MYRIAD"]]
+      one_of<>: [["AUTO", "CPU", "GPU", "NPU", "MYRIAD"]]
     }
   onnxruntime_use_cuda:
     type: bool
@@ -86,3 +86,11 @@ yolox_parameters:
     type: string
     description: "Publish bounding box topic name."
     default_value: "yolox/bounding_boxes"
+  use_bbox_ex_msgs:
+    type: bool
+    description: "Enable or disable bbox_ex_msgs. If true, disable vision_msgs::Detection2DArray."
+    default_value: false
+  publish_resized_image:
+    type: bool
+    description: "Enable or disable resized image."
+    default_value: false
