@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>yolox_ros_cpp</name>
-  <version>0.3.2</version>
+  <version>0.4.0</version>
   <description>The yolox_ros_cpp package</description>
   <maintainer email="53618876+fateshelled@users.noreply.github.com">fateshelled</maintainer>
   <license>Apache-2.0 License</license>
@@ -10,14 +10,14 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <depend>rclcpp</depend>
-  <depend>rclcpp_components</depend>
-  <depend>OpenCV</depend>
+  <depend>bboxes_ex_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
-  <depend>std_msgs</depend>
+  <depend>libopencv-dev</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>bboxes_ex_msgs</depend>
+  <depend>std_msgs</depend>
   <depend>vision_msgs</depend>
   <depend>yolox_cpp</depend>
   <depend>yolox_param</depend>
