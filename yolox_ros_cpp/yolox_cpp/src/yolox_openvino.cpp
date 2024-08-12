@@ -17,6 +17,12 @@ namespace yolox_cpp{
         const auto network = ie.read_model(path_to_model);
 
         //  Step 3. Loading a model to the device
+        std::vector<std::string> available_devices = ie.get_available_devices();
+        std::cout << "======= AVAILABLE DEVICES FOR OPENVINO =======" << std::endl;
+        for (auto device : available_devices) {
+            std::cout << "- " << device << std::endl;
+        }
+        std::cout << "==============================================" << std::endl;
         std::cout << "Loading a model to the device: " << device_name_ << std::endl;
         auto compiled_model = ie.compile_model(network, device_name);
 

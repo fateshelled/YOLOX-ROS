@@ -95,10 +95,20 @@ namespace yolox_ros_cpp
             this, this->params_.src_image_topic_name,
             std::bind(&YoloXNode::colorImageCallback, this, std::placeholders::_1),
             "raw");
-        this->pub_bboxes_ = this->create_publisher<bboxes_ex_msgs::msg::BoundingBoxes>(
-            this->params_.publish_boundingbox_topic_name,
-            10);
-        this->pub_image_ = image_transport::create_publisher(this, this->params_.publish_image_topic_name);
+
+        if (this->params_.use_bbox_ex_msgs) {
+            this->pub_bboxes_ = this->create_publisher<bboxes_ex_msgs::msg::BoundingBoxes>(
+                this->params_.publish_boundingbox_topic_name,
+                10);
+        } else {
+            this->pub_detection2d_ = this->create_publisher<vision_msgs::msg::Detection2DArray>(
+                this->params_.publish_boundingbox_topic_name,
+                10);
+        }
+
+        if (this->params_.publish_resized_image) {
+            this->pub_image_ = image_transport::create_publisher(this, this->params_.publish_image_topic_name);
+        }
     }
 
     void YoloXNode::colorImageCallback(const sensor_msgs::msg::Image::ConstSharedPtr &ptr)
@@ -108,10 +118,10 @@ namespace yolox_ros_cpp
 
         auto now = std::chrono::system_clock::now();
         auto objects = this->yolox_->inference(frame);
-
         auto end = std::chrono::system_clock::now();
+
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - now);
-        RCLCPP_INFO(this->get_logger(), "Inference: %f FPS", 1000.0f / elapsed.count());
+        RCLCPP_INFO(this->get_logger(), "Inference time: %5ld ms", elapsed.count());
 
         yolox_cpp::utils::draw_objects(frame, objects, this->class_names_);
         if (this->params_.imshow_isshow)
@@ -124,12 +134,32 @@ namespace yolox_ros_cpp
             }
         }
 
-        auto boxes = objects_to_bboxes(frame, objects, img->header);
-        this->pub_bboxes_->publish(boxes);
+        if (this->params_.use_bbox_ex_msgs)
+        {
+            if (this->pub_bboxes_ == nullptr)
+            {
+                RCLCPP_ERROR(this->get_logger(), "pub_bboxes_ is nullptr");
+                return;
+            }
+            auto boxes = objects_to_bboxes(frame, objects, img->header);
+            this->pub_bboxes_->publish(boxes);
+        }
+        else
+        {
+            if (this->pub_detection2d_ == nullptr)
+            {
+                RCLCPP_ERROR(this->get_logger(), "pub_detection2d_ is nullptr");
+                return;
+            }
+            vision_msgs::msg::Detection2DArray detections = objects_to_detection2d(objects, img->header);
+            this->pub_detection2d_->publish(detections);
+        }
 
-        sensor_msgs::msg::Image::SharedPtr pub_img;
-        pub_img = cv_bridge::CvImage(img->header, "bgr8", frame).toImageMsg();
-        this->pub_image_.publish(pub_img);
+        if (this->params_.publish_resized_image) {
+            sensor_msgs::msg::Image::SharedPtr pub_img =
+                cv_bridge::CvImage(img->header, "bgr8", frame).toImageMsg();
+            this->pub_image_.publish(pub_img);
+        }
     }
 
     bboxes_ex_msgs::msg::BoundingBoxes YoloXNode::objects_to_bboxes(
@@ -140,8 +170,8 @@ namespace yolox_ros_cpp
         for (const auto &obj : objects)
         {
             bboxes_ex_msgs::msg::BoundingBox box;
-            box.probability = obj.prob;
-            box.class_id = this->class_names_[obj.label];
+            box.probability = obj.prob;;
+            box.class_id = std::to_string(obj.label);
             box.xmin = obj.rect.x;
             box.ymin = obj.rect.y;
             box.xmax = (obj.rect.x + obj.rect.width);
@@ -151,6 +181,26 @@ namespace yolox_ros_cpp
             boxes.bounding_boxes.emplace_back(box);
         }
         return boxes;
+    }
+
+    vision_msgs::msg::Detection2DArray YoloXNode::objects_to_detection2d(const std::vector<yolox_cpp::Object> &objects, const std_msgs::msg::Header &header)
+    {
+        vision_msgs::msg::Detection2DArray detection2d;
+        detection2d.header = header;
+        for (const auto &obj : objects)
+        {
+            vision_msgs::msg::Detection2D det;
+            det.bbox.center.position.x = obj.rect.x + obj.rect.width / 2;
+            det.bbox.center.position.y = obj.rect.y + obj.rect.height / 2;
+            det.bbox.size_x = obj.rect.width;
+            det.bbox.size_y = obj.rect.height;
+
+            det.results.resize(1);
+            det.results[0].hypothesis.class_id = std::to_string(obj.label);
+            det.results[0].hypothesis.score = obj.prob;
+            detection2d.detections.emplace_back(det);
+        }
+        return detection2d;
     }
 }
 
