@@ -10,9 +10,6 @@ on:
 jobs:
   ci:
     runs-on: ${{ matrix.os }}
-    if: |
-      ((github.event.action == 'labeled') && (github.event.label.name == 'TESTING')) ||
-      ((github.event.action == 'synchronize') && contains(github.event.pull_request.labels.*.name, 'TESTING'))
     container:
       image: osrf/ros:${{ matrix.ros_distribution }}-desktop
     timeout-minutes: 20
