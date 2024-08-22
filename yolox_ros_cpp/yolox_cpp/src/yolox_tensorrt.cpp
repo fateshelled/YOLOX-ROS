@@ -54,6 +54,10 @@ namespace yolox_cpp
             this->output_size_ *= output_dims.d[j];
         }
 
+        // allocate buffer
+        this->input_blob_.resize(this->input_h_ * this->input_w_ * 3);
+        this->output_blob_.resize(this->output_size_);
+
         // Pointers to input and output device buffers to pass to engine.
         // Engine requires exactly IEngine::getNbBindings() number of buffers.
         assert(this->engine_->getNbIOTensors() == 2);
@@ -93,24 +97,23 @@ namespace yolox_cpp
     {
         // preprocess
         auto pr_img = static_resize(frame);
-        float *input_blob = new float[pr_img.total() * 3];
-        blobFromImage(pr_img, input_blob);
+        blobFromImage(pr_img, input_blob_.data());
 
         // inference
-        float *output_blob = new float[this->output_size_];
-        this->doInference(input_blob, output_blob);
+        this->doInference(input_blob_.data(), output_blob_.data());
 
-        float scale = std::min(this->input_w_ / (frame.cols * 1.0), this->input_h_ / (frame.rows * 1.0));
+        const float scale = std::min(
+            static_cast<float>(this->input_w_) / static_cast<float>(frame.cols),
+            static_cast<float>(this->input_h_) / static_cast<float>(frame.rows)
+        );
 
         std::vector<Object> objects;
-        decode_outputs(output_blob, this->grid_strides_, objects, this->bbox_conf_thresh_, scale, frame.cols, frame.rows);
+        decode_outputs(output_blob_.data(), this->grid_strides_, objects, this->bbox_conf_thresh_, scale, frame.cols, frame.rows);
 
-        delete input_blob;
-        delete output_blob;
         return objects;
     }
 
-    void YoloXTensorRT::doInference(float *input, float *output)
+    void YoloXTensorRT::doInference(const float *input, float *output)
     {
         // Create stream
         cudaStream_t stream;

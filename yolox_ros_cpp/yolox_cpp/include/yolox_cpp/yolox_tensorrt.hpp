@@ -40,7 +40,7 @@ namespace yolox_cpp{
             std::vector<Object> inference(const cv::Mat& frame) override;
 
         private:
-            void doInference(float* input, float* output);
+            void doInference(const float* input, float* output);
 
             int DEVICE_ = 0;
             Logger gLogger_;
@@ -51,6 +51,8 @@ namespace yolox_cpp{
             const int inputIndex_ = 0;
             const int outputIndex_ = 1;
             void *inference_buffers_[2];
+            std::vector<float> input_blob_;
+            std::vector<float> output_blob_;
 
     };
 } // namespace yolox_cpp
