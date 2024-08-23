@@ -39,9 +39,9 @@ if(YOLOX_USE_OPENVINO)
   find_package(OpenVINO REQUIRED)
 
   set(ENABLE_OPENVINO ON)
-  set(TARGET_SRC src/yolox_openvino.cpp)
-  set(TARGET_LIBS openvino::runtime)
-  set(TARGET_DPENDENCIES OpenVINO)
+  set(TARGET_SRC ${TARGET_SRC} src/yolox_openvino.cpp)
+  set(TARGET_LIBS ${TARGET_LIBS} openvino::runtime)
+  set(TARGET_DPENDENCIES ${TARGET_DPENDENCIES} OpenVINO)
 endif()
 
 if(YOLOX_USE_TENSORRT)
@@ -54,27 +54,29 @@ if(YOLOX_USE_TENSORRT)
     PATH_SUFFIXES include)
 
   set(ENABLE_TENSORRT ON)
-  set(TARGET_SRC src/yolox_tensorrt.cpp)
-  set(TARGET_LIBS nvinfer nvinfer_plugin)
-  set(TARGET_DPENDENCIES CUDA)
+  set(TARGET_SRC ${TARGET_SRC} src/yolox_tensorrt.cpp)
+  set(TARGET_LIBS ${TARGET_LIBS} nvinfer nvinfer_plugin)
+  set(TARGET_DPENDENCIES ${TARGET_DPENDENCIES} CUDA)
 endif()
 
 # tflite
 if(YOLOX_USE_TFLITE)
   set(ENABLE_TFLITE ON)
-  set(TARGET_SRC src/yolox_tflite.cpp)
-  set(INCLUDES ${INCLUDES} ${TFLITE_INCLUDE_DIR})
-  set(INCLUDES ${INCLUDES} ${ABSEIL_CPP_ICLUDE_DIR})
-  set(INCLUDES ${INCLUDES} ${FLATBUFFERS_INCLUDE_DIR})
-  set(TARGET_LIBS ${TFLITE_LIB_PATH}/libtensorflow-lite.so)
+  set(TARGET_SRC ${TARGET_SRC} src/yolox_tflite.cpp)
+  set(TFLITE_INCLUDES
+    ${TFLITE_INCLUDE_DIR}
+    ${ABSEIL_CPP_ICLUDE_DIR}
+    ${FLATBUFFERS_INCLUDE_DIR}
+  )
+  set(TARGET_LIBS ${TARGET_LIBS} ${TFLITE_LIB_PATH}/libtensorflow-lite.so)
 endif()
 
 # onnxruntime
 if(YOLOX_USE_ONNXRUNTIME)
   find_library(ONNXRUNTIME NAMES onnxruntime)
   set(ENABLE_ONNXRUNTIME ON)
-  set(TARGET_SRC src/yolox_onnxruntime.cpp)
-  set(TARGET_LIBS onnxruntime)
+  set(TARGET_SRC ${TARGET_SRC} src/yolox_onnxruntime.cpp)
+  set(TARGET_LIBS ${TARGET_LIBS} onnxruntime)
 endif()
 
 configure_file(
@@ -88,8 +90,8 @@ ament_export_dependencies(${TARGET_DPENDENCIES})
 target_link_libraries(yolox_cpp ${TARGET_LIBS})
 
 if (YOLOX_USE_TFLITE)
-  target_include_directories(yolox_cpp PUBLIC ${INCLUDES})
-  ament_export_include_directories(${INCLUDES})
+  target_include_directories(yolox_cpp PUBLIC ${TFLITE_INCLUDES})
+  ament_export_include_directories(${TFLITE_INCLUDES})
   install(DIRECTORY ${TFLITE_LIB_PATH}/ DESTINATION lib)
 endif()
 
