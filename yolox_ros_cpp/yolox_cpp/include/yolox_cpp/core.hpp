@@ -2,8 +2,6 @@
 #define _YOLOX_CPP_CORE_HPP
 
 #include <opencv2/core/types.hpp>
-#include <opencv2/core/simd_intrinsics.hpp>
-#include <algorithm>
 
 namespace yolox_cpp
 {
@@ -34,9 +32,9 @@ namespace yolox_cpp
     {
     public:
         AbcYoloX() {}
-        AbcYoloX(const float nms_th = 0.45, const float conf_th = 0.3,
+        AbcYoloX(float nms_th = 0.45, float conf_th = 0.3,
                  const std::string &model_version = "0.1.1rc0",
-                 const int num_classes = 80, const bool p6 = false)
+                 int num_classes = 80, bool p6 = false)
             : nms_thresh_(nms_th), bbox_conf_thresh_(conf_th),
               num_classes_(num_classes), p6_(p6), model_version_(model_version)
         {
@@ -56,7 +54,7 @@ namespace yolox_cpp
         const std::vector<float> std255_inv_ = {
             1.0 / (255.0 * 0.229), 1.0 / (255.0 * 0.224), 1.0 / (255.0 * 0.225)};
         const std::vector<float> mean_std_ = {
-            -0.485 / 0.229 , -0.456 / 0.224, -0.406 / 0.225};
+            -0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225};
         const std::vector<int> strides_ = {8, 16, 32};
         const std::vector<int> strides_p6_ = {8, 16, 32, 64};
         std::vector<GridAndStride> grid_strides_;
@@ -64,9 +62,8 @@ namespace yolox_cpp
         cv::Mat static_resize(const cv::Mat &img)
         {
             const float r = std::min(
-                static_cast<float>(input_w_) / (static_cast<float>(img.cols) * 1.0f),
-                static_cast<float>(input_h_) / (static_cast<float>(img.rows) * 1.0f));
-            // r = std::min(r, 1.0f);
+                static_cast<float>(input_w_) / static_cast<float>(img.cols),
+                static_cast<float>(input_h_) / static_cast<float>(img.rows));
             const int unpad_w = r * img.cols;
             const int unpad_h = r * img.rows;
             cv::Mat re(unpad_h, unpad_w, CV_8UC3);
@@ -79,23 +76,55 @@ namespace yolox_cpp
         // for NCHW
         void blobFromImage(const cv::Mat &img, float *blob_data)
         {
-            blobFromImage_cpu(img, blob_data);
-            // #if defined(CV_SIMD128) && CV_SIMD128 == 1
-            //     blobFromImage_simd(img, blob_data);
-            // #else
-            //     blobFromImage_cpu(img, blob_data);
-            // #endif
+            const size_t channels = 3;
+            const size_t img_h = img.rows;
+            const size_t img_w = img.cols;
+            const size_t img_hw = img_h * img_w;
+            float *blob_data_ch0 = blob_data;
+            float *blob_data_ch1 = blob_data + img_hw;
+            float *blob_data_ch2 = blob_data + img_hw * 2;
+            // HWC -> CHW
+            if (this->model_version_ == "0.1.0")
+            {
+                for (size_t i = 0; i < img_hw; ++i)
+                {
+                    // blob = (img / 255.0 - mean) / std
+                    const size_t src_idx = i * channels;
+                    blob_data_ch0[i] = static_cast<float>(img.data[src_idx + 0]) * this->std255_inv_[0] + this->mean_std_[0];
+                    blob_data_ch1[i] = static_cast<float>(img.data[src_idx + 1]) * this->std255_inv_[1] + this->mean_std_[1];
+                    blob_data_ch2[i] = static_cast<float>(img.data[src_idx + 2]) * this->std255_inv_[2] + this->mean_std_[2];
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < img_hw; ++i)
+                {
+                    const size_t src_idx = i * channels;
+                    blob_data_ch0[i] = static_cast<float>(img.data[src_idx + 0]);
+                    blob_data_ch1[i] = static_cast<float>(img.data[src_idx + 1]);
+                    blob_data_ch2[i] = static_cast<float>(img.data[src_idx + 2]);
+                }
+            }
         }
 
         // for NHWC
         void blobFromImage_nhwc(const cv::Mat &img, float *blob_data)
         {
-            blobFromImage_nhwc_cpu(img, blob_data);
-            // #if defined(CV_SIMD128) && CV_SIMD128 == 1
-            //     blobFromImage_nhwc_simd(img, blob_data);
-            // #else
-            //     blobFromImage_nhwc_cpu(img, blob_data);
-            // #endif
+            const size_t channels = 3;
+            cv::Mat img_f32;
+            img.convertTo(img_f32, CV_32FC3);
+            if (this->model_version_ == "0.1.0")
+            {
+                std::vector<cv::Mat> img_f32_split(3);
+                cv::split(img_f32, img_f32_split);
+                for (size_t i = 0; i < channels; ++i)
+                {
+                    img_f32_split[i] *= this->std255_inv_[i];
+                    img_f32_split[i] += this->mean_std_[i];
+                }
+                cv::merge(img_f32_split, img_f32);
+            }
+            blob_data = reinterpret_cast<float *>(img_f32.data);
         }
 
         void generate_grids_and_stride(const int target_w, const int target_h, const std::vector<int> &strides, std::vector<GridAndStride> &grid_strides)
@@ -216,10 +245,10 @@ namespace yolox_cpp
 
             std::sort(
                 proposals.begin(), proposals.end(),
-                [](const Object& a, const Object& b) {
+                [](const Object &a, const Object &b)
+                {
                     return a.prob > b.prob; // descent
-                }
-            );
+                });
 
             std::vector<int> picked;
             nms_sorted_bboxes(proposals, picked, nms_thresh_);
@@ -249,170 +278,6 @@ namespace yolox_cpp
                 objects[i].rect.y = y0;
                 objects[i].rect.width = x1 - x0;
                 objects[i].rect.height = y1 - y0;
-            }
-        }
-
-    private:
-    #if defined(CV_SIMD128) && CV_SIMD128 == 1
-        void blobFromImage_simd(const cv::Mat &img, float *blob_data)
-        {
-            const size_t channels = 3;
-            const size_t img_h = img.rows;
-            const size_t img_w = img.cols;
-            const size_t img_hw = img_h * img_w;
-
-            const size_t step = 4; // load 4 pixel
-            const size_t N = img_hw / step;
-            const size_t remain = img_hw % step;
-
-            float *blob_data_ch0 = blob_data;
-            float *blob_data_ch1 = blob_data + img_hw;
-            float *blob_data_ch2 = blob_data + img_hw * 2;
-
-            if (this->model_version_ == "0.1.0")
-            {
-                cv::Mat img_f32;
-                img.convertTo(img_f32, CV_32FC3);
-                const cv::v_float32x4 mean_std0 = cv::v_setall_f32(-this->mean_std_[0]);
-                const cv::v_float32x4 mean_std1 = cv::v_setall_f32(-this->mean_std_[1]);
-                const cv::v_float32x4 mean_std2 = cv::v_setall_f32(-this->mean_std_[2]);
-                const cv::v_float32x4 std255_inv_0 = cv::v_setall_f32(this->std255_inv_[0]);
-                const cv::v_float32x4 std255_inv_1 = cv::v_setall_f32(this->std255_inv_[1]);
-                const cv::v_float32x4 std255_inv_2 = cv::v_setall_f32(this->std255_inv_[2]);
-
-                for (size_t i = 0; i < N; ++i)
-                {
-                    cv::v_float32x4 ch0_f;
-                    cv::v_float32x4 ch1_f;
-                    cv::v_float32x4 ch2_f;
-                    // load 4 pixel x 3ch
-                    cv::v_load_deinterleave(
-                        reinterpret_cast<const float*>(img_f32.data) + i * (step * channels),
-                        ch0_f, ch1_f, ch2_f);
-
-                    {
-                        ch0_f = ch0_f * std255_inv_0 + mean_std0;
-                        ch1_f = ch1_f * std255_inv_1 + mean_std1;
-                        ch2_f = ch2_f * std255_inv_2 + mean_std2;
-                    }
-
-                    cv::v_store(blob_data_ch0 + i * step, ch0_f);
-                    cv::v_store(blob_data_ch1 + i * step, ch1_f);
-                    cv::v_store(blob_data_ch2 + i * step, ch2_f);
-                }
-            }
-            else
-            {
-                cv::Mat img_f32;
-                img.convertTo(img_f32, CV_32FC3);
-                for (size_t i = 0; i < N; ++i)
-                {
-                    cv::v_float32x4 ch0_f;
-                    cv::v_float32x4 ch1_f;
-                    cv::v_float32x4 ch2_f;
-                    // load 4 pixel x 3ch
-                    cv::v_load_deinterleave(
-                        reinterpret_cast<const float*>(img_f32.data) + i * (step * channels),
-                        ch0_f, ch1_f, ch2_f);
-
-                    cv::v_store(blob_data_ch0 + i * step, ch0_f);
-                    cv::v_store(blob_data_ch1 + i * step, ch1_f);
-                    cv::v_store(blob_data_ch2 + i * step, ch2_f);
-                }
-            }
-
-            if (remain > 0)
-            {
-                const size_t simd_done_num = N * step;
-                if (this->model_version_ == "0.1.0")
-                {
-                    for (size_t i = 0; i < remain; ++i)
-                    {
-                        // HWC -> CHW
-                        const size_t out_idx = simd_done_num + i;
-                        const size_t src_idx = out_idx * channels;
-                        blob_data_ch0[out_idx] = static_cast<float>(img.data[src_idx + 0]) * this->std255_inv_[0] + this->mean_std_[0];
-                        blob_data_ch1[out_idx] = static_cast<float>(img.data[src_idx + 1]) * this->std255_inv_[1] + this->mean_std_[1];
-                        blob_data_ch2[out_idx] = static_cast<float>(img.data[src_idx + 2]) * this->std255_inv_[2] + this->mean_std_[2];
-                    }
-                }
-                else
-                {
-                    for (size_t i = 0; i < remain; ++i)
-                    {
-                        // HWC -> CHW
-                        const size_t out_idx = simd_done_num + i;
-                        const size_t src_idx = out_idx * channels;
-                        blob_data_ch0[out_idx] = static_cast<float>(img.data[src_idx + 0]);
-                        blob_data_ch1[out_idx] = static_cast<float>(img.data[src_idx + 1]);
-                        blob_data_ch2[out_idx] = static_cast<float>(img.data[src_idx + 2]);
-                    }
-
-                }
-            }
-
-        }
-    #endif
-        void blobFromImage_cpu(const cv::Mat &img, float *blob_data)
-        {
-            const size_t channels = 3;
-            const size_t img_h = img.rows;
-            const size_t img_w = img.cols;
-            const size_t img_hw = img_h * img_w;
-            float *blob_data_ch0 = blob_data;
-            float *blob_data_ch1 = blob_data + img_hw;
-            float *blob_data_ch2 = blob_data + img_hw * 2;
-            // HWC -> CHW
-            if (this->model_version_ == "0.1.0")
-            {
-                for (size_t i = 0; i < img_hw; ++i)
-                {
-                    // blob = (img / 255.0 - mean) / std
-                    const size_t src_idx = i * channels;
-                    blob_data_ch0[i] = static_cast<float>(img.data[src_idx + 0]) * this->std255_inv_[0] + this->mean_std_[0];
-                    blob_data_ch1[i] = static_cast<float>(img.data[src_idx + 1]) * this->std255_inv_[1] + this->mean_std_[1];
-                    blob_data_ch2[i] = static_cast<float>(img.data[src_idx + 2]) * this->std255_inv_[2] + this->mean_std_[2];
-                }
-            }
-            else
-            {
-                for (size_t i = 0; i < img_hw; ++i)
-                {
-                    // HWC -> CHW
-                    const size_t src_idx = i * channels;
-                    blob_data_ch0[i] = static_cast<float>(img.data[src_idx + 0]);
-                    blob_data_ch1[i] = static_cast<float>(img.data[src_idx + 1]);
-                    blob_data_ch2[i] = static_cast<float>(img.data[src_idx + 2]);
-                }
-            }
-
-        }
-        void blobFromImage_nhwc_cpu(const cv::Mat &img, float *blob_data)
-        {
-            const size_t channels = 3;
-            const size_t img_h = img.rows;
-            const size_t img_w = img.cols;
-            if (this->model_version_ == "0.1.0")
-            {
-                for (size_t i = 0; i < img_h * img_w; ++i)
-                {
-                    for (size_t c = 0; c < channels; ++c)
-                    {
-                        // blob = (img / 255.0 - mean) / std
-                        blob_data[i * channels + c] =
-                            static_cast<float>(img.data[i * channels + c]) * this->std255_inv_[c] + this->mean_std_[c];
-                    }
-                }
-            }
-            else
-            {
-                for (size_t i = 0; i < img_h * img_w; ++i)
-                {
-                    for (size_t c = 0; c < channels; ++c)
-                    {
-                        blob_data[i * channels + c] = static_cast<float>(img.data[i * channels + c]); // 0.1.1rc0 or later
-                    }
-                }
             }
         }
     };
