@@ -3,8 +3,8 @@
 namespace yolox_cpp
 {
 
-    YoloXTflite::YoloXTflite(file_name_t path_to_model, int num_threads,
-                             float nms_th, float conf_th, std::string model_version,
+    YoloXTflite::YoloXTflite(const file_name_t &path_to_model, int num_threads,
+                             float nms_th, float conf_th, const std::string &model_version,
                              int num_classes, bool p6, bool is_nchw)
         : AbcYoloX(nms_th, conf_th, model_version, num_classes, p6), is_nchw_(is_nchw)
     {
@@ -25,8 +25,8 @@ namespace yolox_cpp
         status = this->interpreter_->SetNumThreads(num_threads);
         if (status != TfLiteStatus::kTfLiteOk)
         {
-            std::cerr << "Failed to SetNumThreads." << std::endl;
-            exit(1);
+            std::string msg = "Failed to SetNumThreads.";
+            throw std::runtime_error(msg.c_str());
         }
 
         // XNNPACK Delegate
@@ -36,8 +36,8 @@ namespace yolox_cpp
         status = this->interpreter_->ModifyGraphWithDelegate(this->delegate_);
         if (status != TfLiteStatus::kTfLiteOk)
         {
-            std::cerr << "Failed to ModifyGraphWithDelegate." << std::endl;
-            exit(1);
+            std::string msg = "Failed to ModifyGraphWithDelegate.";
+            throw std::runtime_error(msg.c_str());
         }
 
         // // GPU Delegate
@@ -67,8 +67,8 @@ namespace yolox_cpp
 
         if (this->interpreter_->AllocateTensors() != TfLiteStatus::kTfLiteOk)
         {
-            std::cerr << "Failed to allocate tensors." << std::endl;
-            exit(1);
+            std::string msg = "Failed to allocate tensors.";
+            throw std::runtime_error(msg.c_str());
         }
 
         {
@@ -97,7 +97,7 @@ namespace yolox_cpp
             {
                 this->input_size_ = sizeof(float);
             }
-            for (size_t i = 0; i < tensor->dims->size; i++)
+            for (int i = 0; i < tensor->dims->size; i++)
             {
                 this->input_size_ *= tensor->dims->data[i];
                 std::cout << "   - " << tensor->dims->data[i] << std::endl;
@@ -120,7 +120,7 @@ namespace yolox_cpp
             {
                 this->output_size_ = sizeof(float);
             }
-            for (size_t i = 0; i < tensor->dims->size; i++)
+            for (int i = 0; i < tensor->dims->size; i++)
             {
                 this->output_size_ *= tensor->dims->data[i];
                 std::cout << "   - " << tensor->dims->data[i] << std::endl;
@@ -166,10 +166,15 @@ namespace yolox_cpp
         }
 
         // postprocess
+        const float scale = std::min(
+            static_cast<float>(this->input_w_) / static_cast<float>(frame.cols),
+            static_cast<float>(this->input_h_) / static_cast<float>(frame.rows)
+        );
         std::vector<Object> objects;
-        float scale = std::min(this->input_w_ / (frame.cols * 1.0), this->input_h_ / (frame.rows * 1.0));
-        float *output_blob = this->interpreter_->typed_output_tensor<float>(0);
-        decode_outputs(output_blob, this->grid_strides_, objects, this->bbox_conf_thresh_, scale, frame.cols, frame.rows);
+        decode_outputs(
+            this->interpreter_->typed_output_tensor<float>(0),
+            this->grid_strides_, objects,
+            this->bbox_conf_thresh_, scale, frame.cols, frame.rows);
 
         return objects;
     }

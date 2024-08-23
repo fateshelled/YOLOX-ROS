@@ -3,8 +3,8 @@
 namespace yolox_cpp
 {
 
-    YoloXTensorRT::YoloXTensorRT(file_name_t path_to_engine, int device,
-                                 float nms_th, float conf_th, std::string model_version,
+    YoloXTensorRT::YoloXTensorRT(const file_name_t &path_to_engine, int device,
+                                 float nms_th, float conf_th, const std::string &model_version,
                                  int num_classes, bool p6)
         : AbcYoloX(nms_th, conf_th, model_version, num_classes, p6),
           DEVICE_(device)
@@ -27,8 +27,9 @@ namespace yolox_cpp
         }
         else
         {
-            std::cerr << "invalid arguments path_to_engine: " << path_to_engine << std::endl;
-            return;
+            std::string msg = "invalid arguments path_to_engine: ";
+            msg += path_to_engine;
+            throw std::runtime_error(msg.c_str());
         }
 
         this->runtime_ = std::unique_ptr<IRuntime>(createInferRuntime(this->gLogger_));
@@ -102,13 +103,16 @@ namespace yolox_cpp
         // inference
         this->doInference(input_blob_.data(), output_blob_.data());
 
+        // postprocess
         const float scale = std::min(
             static_cast<float>(this->input_w_) / static_cast<float>(frame.cols),
             static_cast<float>(this->input_h_) / static_cast<float>(frame.rows)
         );
 
         std::vector<Object> objects;
-        decode_outputs(output_blob_.data(), this->grid_strides_, objects, this->bbox_conf_thresh_, scale, frame.cols, frame.rows);
+        decode_outputs(
+            output_blob_.data(), this->grid_strides_, objects,
+            this->bbox_conf_thresh_, scale, frame.cols, frame.rows);
 
         return objects;
     }
@@ -120,13 +124,21 @@ namespace yolox_cpp
         CHECK(cudaStreamCreate(&stream));
 
         // DMA input batch data to device, infer on the batch asynchronously, and DMA output back to host
-        CHECK(cudaMemcpyAsync(this->inference_buffers_[this->inputIndex_], input, 3 * this->input_h_ * this->input_w_ * sizeof(float), cudaMemcpyHostToDevice, stream));
+        CHECK(
+            cudaMemcpyAsync(
+                this->inference_buffers_[this->inputIndex_], input,
+                3 * this->input_h_ * this->input_w_ * sizeof(float),
+                cudaMemcpyHostToDevice, stream));
 
         bool success = context_->enqueueV3(stream);
         if (!success)
             throw std::runtime_error("failed inference");
 
-        CHECK(cudaMemcpyAsync(output, this->inference_buffers_[this->outputIndex_], this->output_size_ * sizeof(float), cudaMemcpyDeviceToHost, stream));
+        CHECK(
+            cudaMemcpyAsync(
+                output, this->inference_buffers_[this->outputIndex_],
+                this->output_size_ * sizeof(float),
+                cudaMemcpyDeviceToHost, stream));
 
         CHECK(cudaStreamSynchronize(stream));
 
