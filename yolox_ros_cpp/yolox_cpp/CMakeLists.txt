@@ -67,7 +67,6 @@ if(YOLOX_USE_TFLITE)
   set(INCLUDES ${INCLUDES} ${ABSEIL_CPP_ICLUDE_DIR})
   set(INCLUDES ${INCLUDES} ${FLATBUFFERS_INCLUDE_DIR})
   set(TARGET_LIBS ${TFLITE_LIB_PATH}/libtensorflow-lite.so)
-  target_include_directories(yolox_cpp PUBLIC ${INCLUDES})
 endif()
 
 # onnxruntime
@@ -89,6 +88,7 @@ ament_export_dependencies(${TARGET_DPENDENCIES})
 target_link_libraries(yolox_cpp ${TARGET_LIBS})
 
 if (YOLOX_USE_TFLITE)
+  target_include_directories(yolox_cpp PUBLIC ${INCLUDES})
   ament_export_include_directories(${INCLUDES})
   install(DIRECTORY ${TFLITE_LIB_PATH}/ DESTINATION lib)
 endif()
