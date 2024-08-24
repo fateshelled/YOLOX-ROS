@@ -157,18 +157,15 @@ namespace yolox_cpp
 
                 const int basic_pos = anchor_idx * (num_classes_ + 5);
 
-                const float box_objectness = feat_ptr[basic_pos + 4];
                 int class_id = 0;
-                float max_class_score = 0.0;
-                for (int class_idx = 0; class_idx < num_classes_; ++class_idx)
+                float max_class_score = 0.0f;
                 {
-                    const float box_cls_score = feat_ptr[basic_pos + 5 + class_idx];
-                    const float box_prob = box_objectness * box_cls_score;
-                    if (box_prob > max_class_score)
-                    {
-                        class_id = class_idx;
-                        max_class_score = box_prob;
-                    }
+                    const float box_objectness = feat_ptr[basic_pos + 4];
+                    auto begin = feat_ptr + (basic_pos + 5);
+                    auto end = feat_ptr + (basic_pos + 5 + num_classes_);
+                    auto max_elem = std::max_element(begin, end);
+                    class_id = max_elem - begin;
+                    max_class_score = (*max_elem) * box_objectness;
                 }
                 if (max_class_score > prob_threshold)
                 {
@@ -263,10 +260,10 @@ namespace yolox_cpp
                 objects[i] = proposals[picked[i]];
 
                 // adjust offset to original unpadded
-                float x0 = static_cast<float>(objects[i].rect.x) / scale;
-                float y0 = static_cast<float>(objects[i].rect.y) / scale;
-                float x1 = static_cast<float>(objects[i].rect.x + objects[i].rect.width) / scale;
-                float y1 = static_cast<float>(objects[i].rect.y + objects[i].rect.height) / scale;
+                float x0 = objects[i].rect.x / scale;
+                float y0 = objects[i].rect.y / scale;
+                float x1 = (objects[i].rect.x + objects[i].rect.width) / scale;
+                float y1 = (objects[i].rect.y + objects[i].rect.height) / scale;
 
                 // clip
                 x0 = std::max(std::min(x0, max_x), 0.f);
