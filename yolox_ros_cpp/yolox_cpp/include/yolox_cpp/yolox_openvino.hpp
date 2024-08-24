@@ -15,8 +15,8 @@
 namespace yolox_cpp{
     class YoloXOpenVINO: public AbcYoloX{
         public:
-            YoloXOpenVINO(file_name_t path_to_model, std::string device_name,
-                          float nms_th=0.45, float conf_th=0.3, std::string model_version="0.1.1rc0",
+            YoloXOpenVINO(const file_name_t &path_to_model, std::string device_name,
+                          float nms_th=0.45, float conf_th=0.3, const std::string &model_version="0.1.1rc0",
                           int num_classes=80, bool p6=false);
             std::vector<Object> inference(const cv::Mat& frame) override;
 
