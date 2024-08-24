@@ -14,7 +14,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'model_path',
-            default_value='./src/YOLOX-ROS/weights/tensorrt/yolox_nano.trt',
+            default_value='./src/YOLOX-ROS/weights/tensorrt/yolox_tiny.trt',
             description='yolox model path.'
         ),
         DeclareLaunchArgument(
