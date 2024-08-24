@@ -2,10 +2,10 @@
 
 namespace yolox_cpp{
 
-    YoloXONNXRuntime::YoloXONNXRuntime(file_name_t path_to_model,
+    YoloXONNXRuntime::YoloXONNXRuntime(const file_name_t &path_to_model,
                                        int intra_op_num_threads, int inter_op_num_threads,
                                        bool use_cuda, int device_id, bool use_parallel,
-                                       float nms_th, float conf_th, std::string model_version,
+                                       float nms_th, float conf_th, const std::string &model_version,
                                        int num_classes, bool p6)
     :AbcYoloX(nms_th, conf_th, model_version, num_classes, p6),
      intra_op_num_threads_(intra_op_num_threads), inter_op_num_threads_(inter_op_num_threads),
@@ -138,7 +138,10 @@ namespace yolox_cpp{
         float* net_pred = (float *)this->output_buffer_[0].get();
 
         // post process
-        float scale = std::min(input_w_ / (frame.cols*1.0), input_h_ / (frame.rows*1.0));
+        const float scale = std::min(
+            static_cast<float>(this->input_w_) / static_cast<float>(frame.cols),
+            static_cast<float>(this->input_h_) / static_cast<float>(frame.rows)
+        );
         std::vector<Object> objects;
         decode_outputs(net_pred, this->grid_strides_, objects, this->bbox_conf_thresh_, scale, frame.cols, frame.rows);
         return objects;
