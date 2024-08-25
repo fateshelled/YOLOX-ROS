@@ -15,6 +15,9 @@ namespace yolox_cpp
         cv::Rect_<float> rect;
         int label;
         float prob;
+        bool operator<(const Object &right) const {
+            return prob < right.prob;
+        }
     };
 
     struct GridAndStride
@@ -124,7 +127,7 @@ namespace yolox_cpp
                 }
                 cv::merge(img_f32_split, img_f32);
             }
-            blob_data = reinterpret_cast<float *>(img_f32.data);
+            memcpy(blob_data, img_f32.data, img.rows * img.cols * channels * sizeof(float));
         }
 
         void generate_grids_and_stride(const int target_w, const int target_h, const std::vector<int> &strides, std::vector<GridAndStride> &grid_strides)
@@ -214,7 +217,7 @@ namespace yolox_cpp
                 const Object &a = faceobjects[i];
                 const int picked_size = picked.size();
 
-                int keep = 1;
+                bool keep = true;
                 for (int j = 0; j < picked_size; ++j)
                 {
                     const Object &b = faceobjects[picked[j]];
@@ -224,7 +227,10 @@ namespace yolox_cpp
                     const float union_area = areas[i] + areas[picked[j]] - inter_area;
                     // float IoU = inter_area / union_area
                     if (inter_area / union_area > nms_threshold)
-                        keep = 0;
+                    {
+                        keep = false;
+                        break;
+                    }
                 }
 
                 if (keep)
@@ -240,12 +246,8 @@ namespace yolox_cpp
             std::vector<Object> proposals;
             generate_yolox_proposals(grid_strides, prob, bbox_conf_thresh, proposals);
 
-            std::sort(
-                proposals.begin(), proposals.end(),
-                [](const Object &a, const Object &b)
-                {
-                    return a.prob > b.prob; // descent
-                });
+            // descent
+            std::sort(std::rbegin(proposals), std::rend(proposals));
 
             std::vector<int> picked;
             nms_sorted_bboxes(proposals, picked, nms_thresh_);
