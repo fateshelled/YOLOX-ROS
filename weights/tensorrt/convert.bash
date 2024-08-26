@@ -9,7 +9,7 @@ function convert {
     fi
 
     MODEL=$1
-    SCRIPT_DIR=$(cd $(dirname $0); pwd)
+    SCRIPT_DIR=$(cd $(dirname ${BASH_SOURCE:-$0}); pwd)
 
     echo "Model Name: ${MODEL}"
     echo ""
