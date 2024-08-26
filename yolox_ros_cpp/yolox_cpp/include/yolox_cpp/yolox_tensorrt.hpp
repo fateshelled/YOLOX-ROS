@@ -9,8 +9,8 @@
 #include <fstream>
 #include <opencv2/opencv.hpp>
 
-#include "cuda_runtime_api.h"
-#include "NvInfer.h"
+#include <cuda_runtime_api.h>
+#include <NvInfer.h>
 
 #include "core.hpp"
 #include "coco_names.hpp"

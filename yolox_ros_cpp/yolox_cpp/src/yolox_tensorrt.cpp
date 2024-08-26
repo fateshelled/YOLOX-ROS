@@ -11,7 +11,7 @@ namespace yolox_cpp
     {
         cudaSetDevice(this->DEVICE_);
         // create a model using the API directly and serialize it to a stream
-        char *trtModelStream{nullptr};
+        std::vector<char> trtModelStream;
         size_t size{0};
 
         std::ifstream file(path_to_engine, std::ios::binary);
@@ -20,9 +20,9 @@ namespace yolox_cpp
             file.seekg(0, file.end);
             size = file.tellg();
             file.seekg(0, file.beg);
-            trtModelStream = new char[size];
+            trtModelStream.resize(size);
             assert(trtModelStream);
-            file.read(trtModelStream, size);
+            file.read(trtModelStream.data(), size);
             file.close();
         }
         else
@@ -34,11 +34,10 @@ namespace yolox_cpp
 
         this->runtime_ = std::unique_ptr<IRuntime>(createInferRuntime(this->gLogger_));
         assert(this->runtime_ != nullptr);
-        this->engine_ = std::unique_ptr<ICudaEngine>(this->runtime_->deserializeCudaEngine(trtModelStream, size));
+        this->engine_ = std::unique_ptr<ICudaEngine>(this->runtime_->deserializeCudaEngine(trtModelStream.data(), size));
         assert(this->engine_ != nullptr);
         this->context_ = std::unique_ptr<IExecutionContext>(this->engine_->createExecutionContext());
         assert(this->context_ != nullptr);
-        delete[] trtModelStream;
 
         const auto input_name = this->engine_->getIOTensorName(this->inputIndex_);
         const auto input_dims = this->engine_->getTensorShape(input_name);
@@ -74,8 +73,8 @@ namespace yolox_cpp
         assert(this->context_->setInputShape(input_name, input_dims));
         assert(this->context_->allInputDimensionsSpecified());
 
-        assert(this->context_->setTensorAddress(input_name, this->inference_buffers_[this->inputIndex_]));
-        assert(this->context_->setTensorAddress(output_name, this->inference_buffers_[this->outputIndex_]));
+        assert(this->context_->setInputTensorAddress(input_name, this->inference_buffers_[this->inputIndex_]));
+        assert(this->context_->setOutputTensorAddress(output_name, this->inference_buffers_[this->outputIndex_]));
 
         // Prepare GridAndStrides
         if (this->p6_)
@@ -126,17 +125,19 @@ namespace yolox_cpp
         // DMA input batch data to device, infer on the batch asynchronously, and DMA output back to host
         CHECK(
             cudaMemcpyAsync(
-                this->inference_buffers_[this->inputIndex_], input,
+                this->inference_buffers_[this->inputIndex_],
+                input,
                 3 * this->input_h_ * this->input_w_ * sizeof(float),
                 cudaMemcpyHostToDevice, stream));
 
-        bool success = context_->enqueueV3(stream);
+        bool success = context_->executeV2(this->inference_buffers_);
         if (!success)
             throw std::runtime_error("failed inference");
 
         CHECK(
             cudaMemcpyAsync(
-                output, this->inference_buffers_[this->outputIndex_],
+                output,
+                this->inference_buffers_[this->outputIndex_],
                 this->output_size_ * sizeof(float),
                 cudaMemcpyDeviceToHost, stream));
 
