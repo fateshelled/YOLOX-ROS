@@ -15,9 +15,6 @@ namespace yolox_cpp
         cv::Rect_<float> rect;
         int label;
         float prob;
-        bool operator<(const Object &right) const {
-            return prob < right.prob;
-        }
     };
 
     struct GridAndStride
@@ -246,8 +243,12 @@ namespace yolox_cpp
             std::vector<Object> proposals;
             generate_yolox_proposals(grid_strides, prob, bbox_conf_thresh, proposals);
 
-            // descent
-            std::sort(std::rbegin(proposals), std::rend(proposals));
+            std::sort(
+                proposals.begin(), proposals.end(),
+                [](const Object &a, const Object &b)
+                {
+                    return a.prob > b.prob; // descent
+                });
 
             std::vector<int> picked;
             nms_sorted_bboxes(proposals, picked, nms_thresh_);
