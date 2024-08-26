@@ -137,7 +137,7 @@ namespace yolox_cpp{
 
         float* net_pred = (float *)this->output_buffer_[0].get();
 
-        // post process
+        // postprocess
         const float scale = std::min(
             static_cast<float>(this->input_w_) / static_cast<float>(frame.cols),
             static_cast<float>(this->input_h_) / static_cast<float>(frame.rows)
