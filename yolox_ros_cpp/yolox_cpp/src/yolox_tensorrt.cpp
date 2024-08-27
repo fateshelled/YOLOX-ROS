@@ -21,7 +21,6 @@ namespace yolox_cpp
             size = file.tellg();
             file.seekg(0, file.beg);
             trtModelStream.resize(size);
-            assert(trtModelStream);
             file.read(trtModelStream.data(), size);
             file.close();
         }
