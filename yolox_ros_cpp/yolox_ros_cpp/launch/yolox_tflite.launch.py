@@ -43,7 +43,7 @@ def generate_launch_description():
             description='yolox model version.'
         ),
         DeclareLaunchArgument(
-            'tflite/num_threads',
+            'tflite_num_threads',
             default_value='1',
             description='tflite num_threads.'
         ),
@@ -114,7 +114,7 @@ def generate_launch_description():
                     'is_nchw': LaunchConfiguration('is_nchw'),
                     'model_type': 'tflite',
                     'model_version': LaunchConfiguration('model_version'),
-                    'tflite/num_threads': LaunchConfiguration('tflite/num_threads'),
+                    'tflite_num_threads': LaunchConfiguration('tflite_num_threads'),
                     'conf': LaunchConfiguration('conf'),
                     'nms': LaunchConfiguration('nms'),
                     'imshow_isshow': LaunchConfiguration('imshow_isshow'),

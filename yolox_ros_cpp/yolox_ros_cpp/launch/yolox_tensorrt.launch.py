@@ -33,7 +33,7 @@ def generate_launch_description():
             description='num classes.'
         ),
         DeclareLaunchArgument(
-            'tensorrt/device',
+            'tensorrt_device',
             default_value='0',
             description='GPU index. Set in string type. ex 0'
         ),
@@ -108,7 +108,7 @@ def generate_launch_description():
                     'num_classes': LaunchConfiguration('num_classes'),
                     'model_type': 'tensorrt',
                     'model_version': LaunchConfiguration('model_version'),
-                    'tensorrt/device': LaunchConfiguration('tensorrt/device'),
+                    'tensorrt_device': LaunchConfiguration('tensorrt_device'),
                     'conf': LaunchConfiguration('conf'),
                     'nms': LaunchConfiguration('nms'),
                     'imshow_isshow': LaunchConfiguration('imshow_isshow'),
