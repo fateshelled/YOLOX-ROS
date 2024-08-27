@@ -192,7 +192,7 @@ ros2 launch yolox_ros_cpp yolox_tflite.launch.py
   - See [here](https://github.com/fateshelled/YOLOX-ROS/blob/dev_cpp/yolox_ros_cpp/yolox_ros_cpp/labels/coco_names.txt) for label format.
 - `num_classes`: 80
 - `model_version`: 0.1.1rc0
-- `openvino/device`: AUTO
+- `openvino_device`: AUTO
 - `nms`: 0.45
 - `imshow_isshow`: true
 - `src_image_topic_name`: /image_raw
@@ -212,7 +212,7 @@ ros2 launch yolox_ros_cpp yolox_tflite.launch.py
 - `class_labels_path`: ""
 - `num_classes`: 80
 - `model_version`: 0.1.1rc0
-- `tensorrt/device`: 0
+- `tensorrt_device`: 0
 - `conf`: 0.3
 - `nms`: 0.45
 - `imshow_isshow`: true
@@ -233,12 +233,12 @@ ros2 launch yolox_ros_cpp yolox_tflite.launch.py
 - `class_labels_path`: ""
 - `num_classes`: 80
 - `model_version`: 0.1.1rc0
-- `onnxruntime/use_cuda`: true
-- `onnxruntime/use_parallel`: false
-- `onnxruntime/device_id`: 0
-- `onnxruntime/inter_op_num_threads`: 1
-  - if `onnxruntime/use_parallel` is true, the number of threads used to parallelize the execution of the graph (across nodes).
-- `onnxruntime/intra_op_num_threads`: 1
+- `onnxruntime_use_cuda`: true
+- `onnxruntime_use_parallel`: false
+- `onnxruntime_device_id`: 0
+- `onnxruntime_inter_op_num_threads`: 1
+  - if `onnxruntime_use_parallel` is true, the number of threads used to parallelize the execution of the graph (across nodes).
+- `onnxruntime_intra_op_num_threads`: 1
   - the number of threads to use to run the model
 - `conf`: 0.3
 - `nms`: 0.45
@@ -260,7 +260,7 @@ ros2 launch yolox_ros_cpp yolox_tflite.launch.py
 - `class_labels_path`: ""
 - `num_classes`: 1
 - `model_version`: 0.1.1rc0
-- `tflite/num_threads`: 1
+- `tflite_num_threads`: 1
 - `conf`: 0.3
 - `nms`: 0.45
 - `imshow_isshow`: true
