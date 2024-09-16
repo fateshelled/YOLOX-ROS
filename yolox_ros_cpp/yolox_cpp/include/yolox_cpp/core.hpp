@@ -32,9 +32,9 @@ namespace yolox_cpp
     {
     public:
         AbcYoloX() {}
-        AbcYoloX(const float nms_th = 0.45, const float conf_th = 0.3,
+        AbcYoloX(float nms_th = 0.45, float conf_th = 0.3,
                  const std::string &model_version = "0.1.1rc0",
-                 const int num_classes = 80, const bool p6 = false)
+                 int num_classes = 80, bool p6 = false)
             : nms_thresh_(nms_th), bbox_conf_thresh_(conf_th),
               num_classes_(num_classes), p6_(p6), model_version_(model_version)
         {
@@ -49,16 +49,21 @@ namespace yolox_cpp
         int num_classes_;
         bool p6_;
         std::string model_version_;
-        const std::vector<float> mean_ = {0.485, 0.456, 0.406};
-        const std::vector<float> std_ = {0.229, 0.224, 0.225};
+        // const std::vector<float> mean_ = {0.485, 0.456, 0.406};
+        // const std::vector<float> std_ = {0.229, 0.224, 0.225};
+        const std::vector<float> std255_inv_ = {
+            1.0 / (255.0 * 0.229), 1.0 / (255.0 * 0.224), 1.0 / (255.0 * 0.225)};
+        const std::vector<float> mean_std_ = {
+            -0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225};
         const std::vector<int> strides_ = {8, 16, 32};
         const std::vector<int> strides_p6_ = {8, 16, 32, 64};
         std::vector<GridAndStride> grid_strides_;
 
         cv::Mat static_resize(const cv::Mat &img)
         {
-            const float r = std::min(input_w_ / (img.cols * 1.0), input_h_ / (img.rows * 1.0));
-            // r = std::min(r, 1.0f);
+            const float r = std::min(
+                static_cast<float>(input_w_) / static_cast<float>(img.cols),
+                static_cast<float>(input_h_) / static_cast<float>(img.rows));
             const int unpad_w = r * img.cols;
             const int unpad_h = r * img.rows;
             cv::Mat re(unpad_h, unpad_w, CV_8UC3);
@@ -74,31 +79,30 @@ namespace yolox_cpp
             const size_t channels = 3;
             const size_t img_h = img.rows;
             const size_t img_w = img.cols;
+            const size_t img_hw = img_h * img_w;
+            float *blob_data_ch0 = blob_data;
+            float *blob_data_ch1 = blob_data + img_hw;
+            float *blob_data_ch2 = blob_data + img_hw * 2;
+            // HWC -> CHW
             if (this->model_version_ == "0.1.0")
             {
-                for (size_t c = 0; c < channels; ++c)
+                for (size_t i = 0; i < img_hw; ++i)
                 {
-                    for (size_t h = 0; h < img_h; ++h)
-                    {
-                        for (size_t w = 0; w < img_w; ++w)
-                        {
-                            blob_data[c * img_w * img_h + h * img_w + w] =
-                                ((float)img.ptr<cv::Vec3b>(h)[w][c] / 255.0 - this->mean_[c]) / this->std_[c];
-                        }
-                    }
+                    // blob = (img / 255.0 - mean) / std
+                    const size_t src_idx = i * channels;
+                    blob_data_ch0[i] = static_cast<float>(img.data[src_idx + 0]) * this->std255_inv_[0] + this->mean_std_[0];
+                    blob_data_ch1[i] = static_cast<float>(img.data[src_idx + 1]) * this->std255_inv_[1] + this->mean_std_[1];
+                    blob_data_ch2[i] = static_cast<float>(img.data[src_idx + 2]) * this->std255_inv_[2] + this->mean_std_[2];
                 }
             }
             else
             {
-                for (size_t c = 0; c < channels; ++c)
+                for (size_t i = 0; i < img_hw; ++i)
                 {
-                    for (size_t h = 0; h < img_h; ++h)
-                    {
-                        for (size_t w = 0; w < img_w; ++w)
-                        {
-                            blob_data[c * img_w * img_h + h * img_w + w] = (float)img.ptr<cv::Vec3b>(h)[w][c]; // 0.1.1rc0 or later
-                        }
-                    }
+                    const size_t src_idx = i * channels;
+                    blob_data_ch0[i] = static_cast<float>(img.data[src_idx + 0]);
+                    blob_data_ch1[i] = static_cast<float>(img.data[src_idx + 1]);
+                    blob_data_ch2[i] = static_cast<float>(img.data[src_idx + 2]);
                 }
             }
         }
@@ -107,33 +111,25 @@ namespace yolox_cpp
         void blobFromImage_nhwc(const cv::Mat &img, float *blob_data)
         {
             const size_t channels = 3;
-            const size_t img_h = img.rows;
-            const size_t img_w = img.cols;
+            cv::Mat img_f32;
+            img.convertTo(img_f32, CV_32FC3);
             if (this->model_version_ == "0.1.0")
             {
-                for (size_t i = 0; i < img_h * img_w; ++i)
+                std::vector<cv::Mat> img_f32_split(3);
+                cv::split(img_f32, img_f32_split);
+                for (size_t i = 0; i < channels; ++i)
                 {
-                    for (size_t c = 0; c < channels; ++c)
-                    {
-                        blob_data[i * channels + c] =
-                            ((float)img.data[i * channels + c] / 255.0 - this->mean_[c]) / this->std_[c];
-                    }
+                    img_f32_split[i] *= this->std255_inv_[i];
+                    img_f32_split[i] += this->mean_std_[i];
                 }
+                cv::merge(img_f32_split, img_f32);
             }
-            else
-            {
-                for (size_t i = 0; i < img_h * img_w; ++i)
-                {
-                    for (size_t c = 0; c < channels; ++c)
-                    {
-                        blob_data[i * channels + c] = (float)img.data[i * channels + c]; // 0.1.1rc0 or later
-                    }
-                }
-            }
+            memcpy(blob_data, img_f32.data, img.rows * img.cols * channels * sizeof(float));
         }
 
         void generate_grids_and_stride(const int target_w, const int target_h, const std::vector<int> &strides, std::vector<GridAndStride> &grid_strides)
         {
+            grid_strides.clear();
             for (auto stride : strides)
             {
                 const int num_grid_w = target_w / stride;
@@ -151,6 +147,7 @@ namespace yolox_cpp
         void generate_yolox_proposals(const std::vector<GridAndStride> &grid_strides, const float *feat_ptr, const float prob_threshold, std::vector<Object> &objects)
         {
             const int num_anchors = grid_strides.size();
+            objects.clear();
 
             for (int anchor_idx = 0; anchor_idx < num_anchors; ++anchor_idx)
             {
@@ -160,18 +157,15 @@ namespace yolox_cpp
 
                 const int basic_pos = anchor_idx * (num_classes_ + 5);
 
-                const float box_objectness = feat_ptr[basic_pos + 4];
                 int class_id = 0;
-                float max_class_score = 0.0;
-                for (int class_idx = 0; class_idx < num_classes_; ++class_idx)
+                float max_class_score = 0.0f;
                 {
-                    const float box_cls_score = feat_ptr[basic_pos + 5 + class_idx];
-                    const float box_prob = box_objectness * box_cls_score;
-                    if (box_prob > max_class_score)
-                    {
-                        class_id = class_idx;
-                        max_class_score = box_prob;
-                    }
+                    const float box_objectness = feat_ptr[basic_pos + 4];
+                    auto begin = feat_ptr + (basic_pos + 5);
+                    auto end = feat_ptr + (basic_pos + 5 + num_classes_);
+                    auto max_elem = std::max_element(begin, end);
+                    class_id = max_elem - begin;
+                    max_class_score = (*max_elem) * box_objectness;
                 }
                 if (max_class_score > prob_threshold)
                 {
@@ -203,42 +197,6 @@ namespace yolox_cpp
             return inter.area();
         }
 
-        void qsort_descent_inplace(std::vector<Object> &faceobjects, int left, int right)
-        {
-            int i = left;
-            int j = right;
-            float p = faceobjects[(left + right) / 2].prob;
-
-            while (i <= j)
-            {
-                while (faceobjects[i].prob > p)
-                    ++i;
-
-                while (faceobjects[j].prob < p)
-                    --j;
-
-                if (i <= j)
-                {
-                    std::swap(faceobjects[i], faceobjects[j]);
-
-                    ++i;
-                    --j;
-                }
-            }
-            if (left < j)
-                qsort_descent_inplace(faceobjects, left, j);
-            if (i < right)
-                qsort_descent_inplace(faceobjects, i, right);
-        }
-
-        void qsort_descent_inplace(std::vector<Object> &objects)
-        {
-            if (objects.empty())
-                return;
-
-            qsort_descent_inplace(objects, 0, objects.size() - 1);
-        }
-
         void nms_sorted_bboxes(const std::vector<Object> &faceobjects, std::vector<int> &picked, const float nms_threshold)
         {
             picked.clear();
@@ -256,7 +214,7 @@ namespace yolox_cpp
                 const Object &a = faceobjects[i];
                 const int picked_size = picked.size();
 
-                int keep = 1;
+                bool keep = true;
                 for (int j = 0; j < picked_size; ++j)
                 {
                     const Object &b = faceobjects[picked[j]];
@@ -266,7 +224,10 @@ namespace yolox_cpp
                     const float union_area = areas[i] + areas[picked[j]] - inter_area;
                     // float IoU = inter_area / union_area
                     if (inter_area / union_area > nms_threshold)
-                        keep = 0;
+                    {
+                        keep = false;
+                        break;
+                    }
                 }
 
                 if (keep)
@@ -282,29 +243,36 @@ namespace yolox_cpp
             std::vector<Object> proposals;
             generate_yolox_proposals(grid_strides, prob, bbox_conf_thresh, proposals);
 
-            qsort_descent_inplace(proposals);
+            std::sort(
+                proposals.begin(), proposals.end(),
+                [](const Object &a, const Object &b)
+                {
+                    return a.prob > b.prob; // descent
+                });
 
             std::vector<int> picked;
             nms_sorted_bboxes(proposals, picked, nms_thresh_);
 
             int count = picked.size();
             objects.resize(count);
+            const float max_x = static_cast<float>(img_w - 1);
+            const float max_y = static_cast<float>(img_h - 1);
 
             for (int i = 0; i < count; ++i)
             {
                 objects[i] = proposals[picked[i]];
 
                 // adjust offset to original unpadded
-                float x0 = (objects[i].rect.x) / scale;
-                float y0 = (objects[i].rect.y) / scale;
+                float x0 = objects[i].rect.x / scale;
+                float y0 = objects[i].rect.y / scale;
                 float x1 = (objects[i].rect.x + objects[i].rect.width) / scale;
                 float y1 = (objects[i].rect.y + objects[i].rect.height) / scale;
 
                 // clip
-                x0 = std::max(std::min(x0, (float)(img_w - 1)), 0.f);
-                y0 = std::max(std::min(y0, (float)(img_h - 1)), 0.f);
-                x1 = std::max(std::min(x1, (float)(img_w - 1)), 0.f);
-                y1 = std::max(std::min(y1, (float)(img_h - 1)), 0.f);
+                x0 = std::max(std::min(x0, max_x), 0.f);
+                y0 = std::max(std::min(y0, max_y), 0.f);
+                x1 = std::max(std::min(x1, max_x), 0.f);
+                y1 = std::max(std::min(y1, max_y), 0.f);
 
                 objects[i].rect.x = x0;
                 objects[i].rect.y = y0;

@@ -37,9 +37,9 @@ Check [this URL](./yolox_ros_cpp/README.md).
 
 <!-- - yolox/image_raw : Resized image (`sensor_msgs/Image`) -->
 
-- bounding_boxes: Output BoundingBoxes like darknet_ros_msgs (`bboxes_ex_msgs/BoundingBoxes`)
-
-  ※ If you want to use `darknet_ros_msgs` , replace `bboxes_ex_msgs` with `darknet_ros_msgs`.
+- bounding_boxes (`bboxes_ex_msgs/BoundingBoxes` or `vision_msgs/Detection2DArray`)
+  - `bboxes_ex_msgs/BoundingBoxes`: Output BoundingBoxes like darknet_ros_msgs
+  - ※ If you want to use `darknet_ros_msgs` , replace `bboxes_ex_msgs` with `darknet_ros_msgs`.
 
 <!-- ![yolox_topic](images_for_readme/yolox_topic.png) -->
 

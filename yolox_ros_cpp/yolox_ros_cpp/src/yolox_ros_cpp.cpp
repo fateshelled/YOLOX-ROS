@@ -120,8 +120,8 @@ namespace yolox_ros_cpp
         auto objects = this->yolox_->inference(frame);
         auto end = std::chrono::system_clock::now();
 
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - now);
-        RCLCPP_INFO(this->get_logger(), "Inference time: %5ld ms", elapsed.count());
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - now);
+        RCLCPP_INFO(this->get_logger(), "Inference time: %5ld us", elapsed.count());
 
         yolox_cpp::utils::draw_objects(frame, objects, this->class_names_);
         if (this->params_.imshow_isshow)

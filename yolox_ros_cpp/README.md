@@ -3,6 +3,8 @@
 ## Requirements
 - ROS2 Iron
   - ros-iron-generate-parameter-library
+  - ros-iron-vision-msgs
+  - ros-iron-usb-cam
 - OpenCV 4.x
 - OpenVINO 2024.*
 - TensorRT 10.x *
@@ -30,8 +32,6 @@ git clone --recursive https://github.com/Ar-Ray-code/YOLOX-ROS -b iron
 cd ~/ros2_ws
 
 ./src/YOLOX-ROS/weights/onnx/download.bash yolox_tiny
-# Download onnx file and convert to IR format.
-# ./src/YOLOX-ROS/weights/openvino/download.bash yolox_tiny
 ```
 
 ### TensorRT
@@ -39,11 +39,11 @@ cd ~/ros2_ws
 cd ~/ros2_ws
 
 # Download onnx model and convert to TensorRT engine.
-# 1st arg is model name. 2nd is workspace size.
+# argument is model name. set yolox_tiny, yolox_nano, yolox_s, yolox_m or yolox_l.
 ./src/YOLOX-ROS/weights/tensorrt/convert.bash yolox_tiny
 ```
 
-#### Tensorflow Lite
+### Tensorflow Lite
 ```bash
 cd ~/ros2_ws
 
@@ -51,7 +51,7 @@ cd ~/ros2_ws
 ./src/YOLOX-ROS/weights/tflite/download_model.bash
 ```
 
-#### PINTO_model_zoo
+### PINTO_model_zoo
 - Support PINTO_model_zoo model
 - Download model using the following script.
   - https://github.com/PINTO0309/PINTO_model_zoo/blob/main/132_YOLOX/download_nano.sh
@@ -77,15 +77,15 @@ cd ~/ros2_ws
 # build with openvino
 source /opt/ros/humble/setup.bash
 source /opt/intel/openvino_2021/bin/setupvars.sh
-colcon build --cmake-args -DYOLOX_USE_OPENVINO=ON
+colcon build --symlink-install --cmake-args -DYOLOX_USE_OPENVINO=ON
 ```
 
 ### TensorRT
 
 ```bash
 # build with tensorrt
-source /opt/ros/humble/setup.bash
-colcon build --cmake-args -DYOLOX_USE_TENSORRT=ON
+source /opt/ros/iron/setup.bash
+colcon build --symlink-install --cmake-args -DYOLOX_USE_TENSORRT=ON
 ```
 
 ### TFLite
@@ -115,12 +115,13 @@ make -j"$(nproc)"
 ```
 
 ```bash
-colcon build --cmake-args \
-  -DYOLOX_USE_TFLITE=ON \
-  -DTFLITE_LIB_PATH=${WORKSPACE}/tflite_build \
-  -DTFLITE_INCLUDE_DIR=${WORKSPACE}/tensorflow_src/ \
-  -DABSEIL_CPP_ICLUDE_DIR=${WORKSPACE}/tflite_build/abseil-cpp \
-  -DFLATBUFFERS_INCLUDE_DIR=${WORKSPACE}/tflite_build/flatbuffers/include
+colcon build --symlink-install \
+   --cmake-args \
+    -DYOLOX_USE_TFLITE=ON \
+    -DTFLITE_LIB_PATH=${WORKSPACE}/tflite_build \
+    -DTFLITE_INCLUDE_DIR=${WORKSPACE}/tensorflow_src/ \
+    -DABSEIL_CPP_ICLUDE_DIR=${WORKSPACE}/tflite_build/abseil-cpp \
+    -DFLATBUFFERS_INCLUDE_DIR=${WORKSPACE}/tflite_build/flatbuffers/include
 ```
 
 <br>
@@ -139,10 +140,6 @@ ros2 launch yolox_ros_cpp yolox_openvino.launch.py
 # ros2 launch yolox_ros_cpp yolox_openvino.launch.py \
 #     model_path:=install/yolox_ros_cpp/share/yolox_ros_cpp/weights/onnx/yolox_tiny_480x640.onnx \
 #     model_version:="0.1.0"
-
-## run YOLOX-tiny with NCS2
-# ros2 launch yolox_ros_cpp yolox_openvino_ncs2.launch.py
-
 ```
 
 ### TensorRT
@@ -156,20 +153,20 @@ ros2 launch yolox_ros_cpp yolox_tensorrt.launch.py
 
 ```
 
-### Jetson + TensorRT
+<!-- ### Jetson + TensorRT
 Jetson docker container cannot display GUI.
 If you want to show image with bounding box drawn, subscribe from host jetson or other PC.
 
 ```bash
 # run yolox_tiny
 ros2 launch yolox_ros_cpp yolox_tensorrt_jetson.launch.py
-```
+``` -->
 
-<!-- ### ONNXRuntime
+### ONNXRuntime
 ```bash
 # run yolox_tiny
 ros2 launch yolox_ros_cpp yolox_onnxruntime.launch.py
-``` -->
+```
 
 ### Tensorflow Lite
 ```bash
@@ -188,19 +185,21 @@ ros2 launch yolox_ros_cpp yolox_tflite.launch.py
 <details>
 <summary>OpenVINO example</summary>
 
-- `model_path`: ./install/yolox_ros_cpp/share/yolox_ros_cpp/weights/openvino/yolox_tiny.xml
+- `model_path`: ./src/YOLOX-ROS/weights/onnx/yolox_tiny.onnx
 - `p6`: false
 - `class_labels_path`: ""
   - if not set, use coco_names.
   - See [here](https://github.com/fateshelled/YOLOX-ROS/blob/dev_cpp/yolox_ros_cpp/yolox_ros_cpp/labels/coco_names.txt) for label format.
 - `num_classes`: 80
 - `model_version`: 0.1.1rc0
-- `openvino/device`: AUTO
+- `openvino_device`: AUTO
 - `nms`: 0.45
 - `imshow_isshow`: true
 - `src_image_topic_name`: /image_raw
 - `publish_image_topic_name`: /yolox/image_raw
 - `publish_boundingbox_topic_name`: /yolox/bounding_boxes
+- `use_bbox_ex_msgs`: false
+- `publish_resized_image`: false
 
 </details>
 
@@ -208,18 +207,20 @@ ros2 launch yolox_ros_cpp yolox_tflite.launch.py
 <details>
 <summary>TensorRT example</summary>
 
-- `model_path`: ./install/yolox_ros_cpp/share/yolox_ros_cpp/weights/tensorrt/yolox_tiny.trt
+- `model_path`: ../src/YOLOX-ROS/weights/tensorrt/yolox_tiny.trt
 - `p6`: false
 - `class_labels_path`: ""
 - `num_classes`: 80
 - `model_version`: 0.1.1rc0
-- `tensorrt/device`: 0
+- `tensorrt_device`: 0
 - `conf`: 0.3
 - `nms`: 0.45
 - `imshow_isshow`: true
 - `src_image_topic_name`: /image_raw
 - `publish_image_topic_name`: /yolox/image_raw
 - `publish_boundingbox_topic_name`: /yolox/bounding_boxes
+- `use_bbox_ex_msgs`: false
+- `publish_resized_image`: false
 
 </details>
 
@@ -227,17 +228,17 @@ ros2 launch yolox_ros_cpp yolox_tflite.launch.py
 <summary>ONNXRuntime example</summary>
 
 
-- `model_path`: ./install/yolox_ros_cpp/share/yolox_ros_cpp/weights/onnx/yolox_tiny.onnx
+- `model_path`: ./src/YOLOX-ROS/weights/onnx/yolox_tiny.onnx
 - `p6`: false
 - `class_labels_path`: ""
 - `num_classes`: 80
 - `model_version`: 0.1.1rc0
-- `onnxruntime/use_cuda`: true
-- `onnxruntime/use_parallel`: false
-- `onnxruntime/device_id`: 0
-- `onnxruntime/inter_op_num_threads`: 1
-  - if `onnxruntime/use_parallel` is true, the number of threads used to parallelize the execution of the graph (across nodes).
-- `onnxruntime/intra_op_num_threads`: 1
+- `onnxruntime_use_cuda`: true
+- `onnxruntime_use_parallel`: false
+- `onnxruntime_device_id`: 0
+- `onnxruntime_inter_op_num_threads`: 1
+  - if `onnxruntime_use_parallel` is true, the number of threads used to parallelize the execution of the graph (across nodes).
+- `onnxruntime_intra_op_num_threads`: 1
   - the number of threads to use to run the model
 - `conf`: 0.3
 - `nms`: 0.45
@@ -245,25 +246,29 @@ ros2 launch yolox_ros_cpp yolox_tflite.launch.py
 - `src_image_topic_name`: /image_raw
 - `publish_image_topic_name`: /yolox/image_raw
 - `publish_boundingbox_topic_name`: /yolox/bounding_boxes
+- `use_bbox_ex_msgs`: false
+- `publish_resized_image`: false
 
 </details>
 
 <details>
 <summary>Tensorflow Lite example</summary>
 
-- `model_path`: ./install/yolox_ros_cpp/share/yolox_ros_cpp/weights/tflite/model.tflite
+- `model_path`: ./src/YOLOX-ROS/weights/tflite/model.tflite
 - `p6`: false
 - `is_nchw`: true
 - `class_labels_path`: ""
 - `num_classes`: 1
 - `model_version`: 0.1.1rc0
-- `tflite/num_threads`: 1
+- `tflite_num_threads`: 1
 - `conf`: 0.3
 - `nms`: 0.45
 - `imshow_isshow`: true
 - `src_image_topic_name`: /image_raw
 - `publish_image_topic_name`: /yolox/image_raw
 - `publish_boundingbox_topic_name`: /yolox/bounding_boxes
+- `use_bbox_ex_msgs`: false
+- `publish_resized_image`: false
 
 </details>
 

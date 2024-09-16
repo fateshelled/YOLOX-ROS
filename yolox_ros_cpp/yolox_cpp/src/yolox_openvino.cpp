@@ -1,8 +1,8 @@
 #include "yolox_cpp/yolox_openvino.hpp"
 
 namespace yolox_cpp{
-    YoloXOpenVINO::YoloXOpenVINO(file_name_t path_to_model, std::string device_name,
-                                 float nms_th, float conf_th, std::string model_version,
+    YoloXOpenVINO::YoloXOpenVINO(const file_name_t &path_to_model, std::string device_name,
+                                 float nms_th, float conf_th, const std::string &model_version,
                                  int num_classes, bool p6)
     :AbcYoloX(nms_th, conf_th, model_version, num_classes, p6),
      device_name_(device_name)
@@ -69,14 +69,16 @@ namespace yolox_cpp{
             ov::Tensor{ov::element::f32, this->input_shape_, reinterpret_cast<float *>(this->blob_.data())});
         infer_request_.infer();
 
-
         const auto &output_tensor = this->infer_request_.get_output_tensor();
         const float* net_pred = reinterpret_cast<float *>(output_tensor.data());
 
-        float scale = std::min(input_w_ / (frame.cols*1.0), input_h_ / (frame.rows*1.0));
+        const float scale = std::min(
+            static_cast<float>(this->input_w_) / static_cast<float>(frame.cols),
+            static_cast<float>(this->input_h_) / static_cast<float>(frame.rows)
+        );
+
         std::vector<Object> objects;
         decode_outputs(net_pred, this->grid_strides_, objects, this->bbox_conf_thresh_, scale, frame.cols, frame.rows);
         return objects;
     }
-
 }

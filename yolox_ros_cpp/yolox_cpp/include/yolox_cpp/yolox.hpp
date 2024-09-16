@@ -19,5 +19,4 @@
     #include "yolox_tflite.hpp"
 #endif
 
-
 #endif

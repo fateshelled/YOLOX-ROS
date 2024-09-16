@@ -9,8 +9,8 @@
 #include <fstream>
 #include <opencv2/opencv.hpp>
 
-#include "cuda_runtime_api.h"
-#include "NvInfer.h"
+#include <cuda_runtime_api.h>
+#include <NvInfer.h>
 
 #include "core.hpp"
 #include "coco_names.hpp"
@@ -25,7 +25,7 @@ namespace yolox_cpp{
             auto ret = (status);\
             if (ret != 0)\
             {\
-                std::cerr << "Cuda failure: " << ret << std::endl;\
+                std::cerr << "CUDA Failure: " << ret << std::endl;\
                 abort();\
             }\
         } while (0)
@@ -33,14 +33,14 @@ namespace yolox_cpp{
 
     class YoloXTensorRT: public AbcYoloX{
         public:
-            YoloXTensorRT(file_name_t path_to_engine, int device=0,
-                          float nms_th=0.45, float conf_th=0.3, std::string model_version="0.1.1rc0",
+            YoloXTensorRT(const file_name_t &path_to_engine, int device=0,
+                          float nms_th=0.45, float conf_th=0.3, const std::string &model_version="0.1.1rc0",
                           int num_classes=80, bool p6=false);
             ~YoloXTensorRT();
             std::vector<Object> inference(const cv::Mat& frame) override;
 
         private:
-            void doInference(float* input, float* output);
+            void doInference(const float* input, float* output);
 
             int DEVICE_ = 0;
             Logger gLogger_;
@@ -51,6 +51,8 @@ namespace yolox_cpp{
             const int inputIndex_ = 0;
             const int outputIndex_ = 1;
             void *inference_buffers_[2];
+            std::vector<float> input_blob_;
+            std::vector<float> output_blob_;
 
     };
 } // namespace yolox_cpp
