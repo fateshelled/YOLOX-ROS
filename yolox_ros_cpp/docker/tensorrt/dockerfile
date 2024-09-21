@@ -1,8 +1,8 @@
 # pytorch/TensorRT/docker/Dockerfile
 # Base image starts with CUDA
-ARG BASE_IMG=nvidia/cuda:12.4.1-devel-ubuntu22.04
+ARG BASE_IMG=nvidia/cuda:12.6.1-devel-ubuntu24.04
 FROM ${BASE_IMG} as base
-ENV BASE_IMG=nvidia/cuda:12.4.1-devel-ubuntu22.04
+ENV BASE_IMG=nvidia/cuda:12.6.1-devel-ubuntu24.04
 
 ARG TENSORRT_VERSION
 ENV TENSORRT_VERSION=${TENSORRT_VERSION}
@@ -32,8 +32,8 @@ RUN pyenv install -v ${PYTHON_VERSION}
 RUN pyenv global ${PYTHON_VERSION}
 
 # Install TensorRT + dependencies
-RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub
-RUN add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /"
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/3bf863cc.pub
+RUN add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/ /"
 RUN apt-get update
 RUN TENSORRT_MAJOR_VERSION=`echo ${TENSORRT_VERSION} | cut -d '.' -f 1` && apt-get install -y tensorrt
 
@@ -48,24 +48,22 @@ ENV LANG=en_US.UTF-8
 
 RUN apt update && \
     apt install -y git wget curl gnupg2 lsb-release && \
-    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
-    sed -i -e 's/ubuntu .* main/ubuntu jammy main/g' /etc/apt/sources.list.d/ros2.list && \
+    sed -i -e 's/ubuntu .* main/ubuntu noble main/g' /etc/apt/sources.list.d/ros2.list && \
     apt update && \
-    apt install -y ros-dev-tools \
-                    ros-humble-cv-bridge \
-                    ros-humble-generate-parameter-library \
-                    ros-humble-parameter-traits \
-                    ros-humble-ros-base \
-                    ros-humble-rqt-image-view \
-                    ros-humble-v4l2-camera && \
+    apt install -y openvino-2024.2.0 \
+                    ros-dev-tools \
+                    ros-jazzy-cv-bridge \
+                    ros-jazzy-generate-parameter-library \
+                    ros-jazzy-parameter-traits \
+                    ros-jazzy-ros-base \
+                    ros-jazzy-rqt-image-view \
+                    ros-jazzy-usb-cam \
+                    ros-jazzy-vision-msgs && \
     apt -y clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    pip install -U pip && \
-    pip install catkin_pkg && \
-    pip install empy==3.3.4 && \
-    pip install lark && \
-    python3 -m pip cache purge
+    rm -rf /var/lib/apt/lists/*
 
 COPY ./ros_entrypoint.sh /ros_entrypoint.sh
 RUN echo "source /ros_entrypoint.sh" >> /root/.bashrc

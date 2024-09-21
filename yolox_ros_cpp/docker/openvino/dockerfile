@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV TZ=Asia/Tokyo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -16,30 +16,27 @@ ENV LANG=en_US.UTF-8
 RUN apt update && \
     apt install -y git wget curl gnupg2 lsb-release
 
-# ROS
 RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
-    sed -i -e 's/ubuntu .* main/ubuntu jammy main/g' /etc/apt/sources.list.d/ros2.list
+    sed -i -e 's/ubuntu .* main/ubuntu noble main/g' /etc/apt/sources.list.d/ros2.list
 # INTEL OPENVINO
 RUN wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB && \
     apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB && \
-    echo "deb https://apt.repos.intel.com/openvino/2024 ubuntu22 main" | tee /etc/apt/sources.list.d/intel-openvino-2024.list
+    echo "deb https://apt.repos.intel.com/openvino/2024 ubuntu24 main" | tee /etc/apt/sources.list.d/intel-openvino-2024.list
 
-# install ros and openvino
 RUN apt update && \
     apt install -y openvino-2024.2.0 \
                     ros-dev-tools \
-                    ros-humble-cv-bridge \
-                    ros-humble-generate-parameter-library \
-                    ros-humble-parameter-traits \
-                    ros-humble-ros-base \
-                    ros-humble-rqt-image-view \
-                    ros-humble-v4l2-camera && \
+                    ros-jazzy-cv-bridge \
+                    ros-jazzy-generate-parameter-library \
+                    ros-jazzy-parameter-traits \
+                    ros-jazzy-ros-base \
+                    ros-jazzy-rqt-image-view \
+                    ros-jazzy-usb-cam \
+                    ros-jazzy-vision-msgs && \
     apt -y clean && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 COPY ./ros_entrypoint.sh /ros_entrypoint.sh
 RUN echo "source /ros_entrypoint.sh" >> /root/.bashrc
-# RUN echo "source /opt/intel/openvino/bin/setupvars.sh " >> /root/.bashrc
-CMD ["bash"]
