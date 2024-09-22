@@ -17,27 +17,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install basic dependencies
 RUN apt-get update
-RUN apt install -y build-essential manpages-dev wget zlib1g software-properties-common git libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget ca-certificates curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev mecab-ipadic-utf8
-
-# Install PyEnv and desired Python version
-ENV HOME="/root"
-ENV PYENV_DIR="$HOME/.pyenv"
-ENV PATH="$PYENV_DIR/shims:$PYENV_DIR/bin:$PATH"
-RUN wget -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer &&\
-    chmod 755 pyenv-installer &&\
-    bash pyenv-installer &&\
-    eval "$(pyenv init -)"
-
-RUN pyenv install -v ${PYTHON_VERSION}
-RUN pyenv global ${PYTHON_VERSION}
+RUN apt install -y build-essential manpages-dev wget zlib1g software-properties-common git libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev ca-certificates curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev mecab-ipadic-utf8
 
 # Install TensorRT + dependencies
 RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/3bf863cc.pub
 RUN add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/ /"
 RUN apt-get update
 RUN TENSORRT_MAJOR_VERSION=`echo ${TENSORRT_VERSION} | cut -d '.' -f 1` && apt-get install -y tensorrt
-
-ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update && apt install locales && \
     locale-gen en_US en_US.UTF-8 && \
@@ -47,14 +33,13 @@ RUN apt update && apt install locales && \
 ENV LANG=en_US.UTF-8
 
 RUN apt update && \
-    apt install -y git wget curl gnupg2 lsb-release && \
+    apt install -y git wget curl gnupg2 lsb-release
 
 RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
     sed -i -e 's/ubuntu .* main/ubuntu noble main/g' /etc/apt/sources.list.d/ros2.list && \
     apt update && \
-    apt install -y openvino-2024.2.0 \
-                    ros-dev-tools \
+    apt install -y ros-dev-tools \
                     ros-jazzy-cv-bridge \
                     ros-jazzy-generate-parameter-library \
                     ros-jazzy-parameter-traits \
@@ -67,5 +52,3 @@ RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o 
 
 COPY ./ros_entrypoint.sh /ros_entrypoint.sh
 RUN echo "source /ros_entrypoint.sh" >> /root/.bashrc
-# ENTRYPOINT ["/ros_entrypoint.sh"]
-CMD ["bash"]
