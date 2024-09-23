@@ -17,6 +17,7 @@ services:
 
         environment:
             - DISPLAY=$DISPLAY
+            - NVIDIA_DISABLE_REQUIRE=1
         volumes:
             - $HOME/ros2_ws:/root/ros2_ws
             - /tmp/.X11-unix:/tmp/.X11-unix

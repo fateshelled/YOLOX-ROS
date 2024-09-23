@@ -14,34 +14,33 @@ RUN apt update && apt install -y locales git cmake wget curl gnupg2 lsb-release 
     rm -rf /var/lib/apt/lists/*
 ENV LANG=en_US.UTF-8
 
-WORKDIR /workdir
-# RUN git clone --depth 1 --recursive https://github.com/microsoft/onnxruntime -b v1.12.1 && \
-#     cd onnxruntime && \
-#     ./build.sh --cudnn_home /usr/lib/x86_64-linux-gnu/ \
-#                --cuda_home /usr/local/cuda \
-#                --use_cuda \
-#                --config RelWithDebInfo \
-#                --build_shared_lib \
-#                --skip_tests && \
-#     cd build/Linux/RelWithDebInfo && \
-#     make install && \
-#     rm -r /workdir/onnxruntime
+RUN git clone --depth 1 --recursive https://github.com/microsoft/onnxruntime -b v1.19.2 && \
+    cd onnxruntime && \
+    ./build.sh --cudnn_home /usr/lib/x86_64-linux-gnu/ \
+               --cuda_home /usr/local/cuda \
+               --use_cuda \
+               --config RelWithDebInfo \
+               --build_shared_lib \
+               --allow_running_as_root \
+               --skip_tests && \
+    cd build/Linux/RelWithDebInfo && \
+    make install
 
-# RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
-#     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
-#     sed -i -e 's/ubuntu .* main/ubuntu noble main/g' /etc/apt/sources.list.d/ros2.list && \
-#     apt update && \
-#     apt install -y ros-dev-tools \
-#                     ros-jazzy-cv-bridge \
-#                     ros-jazzy-generate-parameter-library \
-#                     ros-jazzy-parameter-traits \
-#                     ros-jazzy-ros-base \
-#                     ros-jazzy-rqt-image-view \
-#                     ros-jazzy-usb-cam \
-#                     ros-jazzy-vision-msgs && \
-#     apt -y clean && \
-#     rm -rf /var/lib/apt/lists/*
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
+    sed -i -e 's/ubuntu .* main/ubuntu noble main/g' /etc/apt/sources.list.d/ros2.list && \
+    apt update && \
+    apt install -y ros-dev-tools \
+                    ros-jazzy-cv-bridge \
+                    ros-jazzy-generate-parameter-library \
+                    ros-jazzy-parameter-traits \
+                    ros-jazzy-ros-base \
+                    ros-jazzy-rqt-image-view \
+                    ros-jazzy-usb-cam \
+                    ros-jazzy-vision-msgs && \
+    apt -y clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# WORKDIR /workspace
-# COPY ./ros_entrypoint.sh /ros_entrypoint.sh
-# RUN echo "source /ros_entrypoint.sh" >> /root/.bashrc
+WORKDIR /workspace
+COPY ./ros_entrypoint.sh /ros_entrypoint.sh
+RUN echo "source /ros_entrypoint.sh" >> /root/.bashrc
