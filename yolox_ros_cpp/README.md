@@ -2,9 +2,9 @@
 
 ## Requirements
 - ROS2 Iron
-  - ros-iron-generate-parameter-library
-  - ros-iron-vision-msgs
-  - ros-iron-usb-cam
+  - ros-jazzy-generate-parameter-library
+  - ros-jazzy-vision-msgs
+  - ros-jazzy-usb-cam
 - OpenCV 4.x
 - OpenVINO 2024.*
 - TensorRT 10.x *
@@ -23,7 +23,7 @@
 ## Clone YOLOX-ROS
 ```bash
 cd ~/ros2_ws/src
-git clone --recursive https://github.com/Ar-Ray-code/YOLOX-ROS -b iron
+git clone --recursive https://github.com/Ar-Ray-code/YOLOX-ROS -b jazzy
 ```
 
 ## Model Convert or Download
@@ -75,8 +75,7 @@ cd ~/ros2_ws
 
 ```bash
 # build with openvino
-source /opt/ros/humble/setup.bash
-source /opt/intel/openvino_2021/bin/setupvars.sh
+source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install --cmake-args -DYOLOX_USE_OPENVINO=ON
 ```
 
@@ -84,7 +83,7 @@ colcon build --symlink-install --cmake-args -DYOLOX_USE_OPENVINO=ON
 
 ```bash
 # build with tensorrt
-source /opt/ros/iron/setup.bash
+source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install --cmake-args -DYOLOX_USE_TENSORRT=ON
 ```
 
@@ -95,7 +94,7 @@ colcon build --symlink-install --cmake-args -DYOLOX_USE_TENSORRT=ON
 https://www.tensorflow.org/lite/guide/build_cmake
 
 Below is an example build script.
-Please change `${WORKSPACE}` as appropriate for your environment.
+Please change `${WORKSPACE}` as appropriate for your envjazzyment.
 ```bash
 export WORKSPACE=${HOME}/ws_tflite
 mkdir -p ${WORKSPACE}
