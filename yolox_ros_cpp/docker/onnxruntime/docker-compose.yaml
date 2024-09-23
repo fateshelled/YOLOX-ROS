@@ -5,17 +5,24 @@ services:
         build:
             context: .
             args:
-                - BASE_TAB=12.1.0-cudnn8-devel-ubuntu22.04
-        image: fateshelled/onnxruntime_yolox_ros:latest
+                - BASE_TAB=12.6.1-cudnn-devel-ubuntu24.04
         network_mode: host
-        runtime: nvidia
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: 1
+                          capabilities: [gpu]
+
         environment:
             - DISPLAY=$DISPLAY
+            - NVIDIA_DISABLE_REQUIRE=1
         volumes:
             - $HOME/ros2_ws:/root/ros2_ws
             - /tmp/.X11-unix:/tmp/.X11-unix
-        devices:
-            - "/dev/video0:/dev/video0"
+        # devices:
+        #     - "/dev/video0:/dev/video0"
         working_dir: /root/ros2_ws
         tty: true
         command: bash

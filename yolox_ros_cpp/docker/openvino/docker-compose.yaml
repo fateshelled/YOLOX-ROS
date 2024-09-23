@@ -8,11 +8,10 @@ services:
         environment:
             - DISPLAY=$DISPLAY
         volumes:
-            - ../../../:/root/ros2_ws/src
+            - $HOME/ros2_ws:/root/ros2_ws
             - /tmp/.X11-unix:/tmp/.X11-unix
-        devices:
-            - "/dev/video0:/dev/video0"
+        # devices:
+        #     - "/dev/video0:/dev/video0"
         working_dir: /root/ros2_ws
         tty: true
         command: bash
-
