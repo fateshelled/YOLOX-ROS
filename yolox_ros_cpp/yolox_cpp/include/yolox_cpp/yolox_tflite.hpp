@@ -9,14 +9,12 @@
 #include <fstream>
 #include <opencv2/opencv.hpp>
 
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/kernels/register.h"
-#include "tensorflow/lite/kernels/internal/tensor_ctypes.h"
-#include "tensorflow/lite/model.h"
-#include "tensorflow/lite/optional_debug_tools.h"
-#include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
-// #include "tensorflow/lite/delegates/nnapi/nnapi_delegate.h"
-// #include "tensorflow/lite/delegates/gpu/delegate.h"
+#include <tensorflow/lite/interpreter.h>
+#include <tensorflow/lite/kernels/register.h>
+#include <tensorflow/lite/kernels/internal/tensor_ctypes.h>
+#include <tensorflow/lite/model.h>
+#include <tensorflow/lite/optional_debug_tools.h>
+#include <tensorflow/lite/kernels/kernel_util.h>
 
 #include "core.hpp"
 #include "coco_names.hpp"
@@ -45,7 +43,6 @@ namespace yolox_cpp{
             std::unique_ptr<tflite::FlatBufferModel> model_;
             std::unique_ptr<tflite::ops::builtin::BuiltinOpResolver> resolver_;
             std::unique_ptr<tflite::Interpreter> interpreter_;
-            TfLiteDelegate* delegate_;
 
     };
 } // namespace yolox_cpp

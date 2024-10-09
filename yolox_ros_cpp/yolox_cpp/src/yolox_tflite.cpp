@@ -1,5 +1,13 @@
 #include "yolox_cpp/yolox_tflite.hpp"
 
+#include <tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h>
+// #include <tensorflow/lite/delegates/nnapi/nnapi_delegate.h>
+// #include <tensorflow/lite/delegates/gpu/delegate.h>
+
+#if __has_include(<armnn/delegate/classic/include/armnn_delegate.hpp>)
+#include <armnn/delegate/classic/include/armnn_delegate.hpp>
+#endif
+
 namespace yolox_cpp
 {
 
@@ -29,15 +37,41 @@ namespace yolox_cpp
             throw std::runtime_error(msg.c_str());
         }
 
-        // XNNPACK Delegate
-        auto xnnpack_options = TfLiteXNNPackDelegateOptionsDefault();
-        xnnpack_options.num_threads = num_threads;
-        this->delegate_ = TfLiteXNNPackDelegateCreate(&xnnpack_options);
-        status = this->interpreter_->ModifyGraphWithDelegate(this->delegate_);
-        if (status != TfLiteStatus::kTfLiteOk)
+        bool use_armnn_delegate = true;
+        if (use_armnn_delegate)
         {
-            std::string msg = "Failed to ModifyGraphWithDelegate.";
-            throw std::runtime_error(msg.c_str());
+            // ArmNN Delegate
+            auto armnn_options = armnnDelegate::TfLiteArmnnDelegateOptionsDefault();
+            // auto backends = armnn_options.GetBackends();
+
+            std::vector<armnn::BackendId> backends = { armnn::Compute::CpuAcc };
+            armnn_options.SetBackends(backends);
+            std::unique_ptr<TfLiteDelegate, decltype(&armnnDelegate::TfLiteArmnnDelegateDelete)>
+                armnn_delegate(
+                    armnnDelegate::TfLiteArmnnDelegateCreate(armnn_options),
+                    armnnDelegate::TfLiteArmnnDelegateDelete);
+            status = this->interpreter_->ModifyGraphWithDelegate(std::move(armnn_delegate));
+            if (status != TfLiteStatus::kTfLiteOk)
+            {
+                std::string msg = "Failed to ModifyGraphWithDelegate.";
+                throw std::runtime_error(msg.c_str());
+            }
+        }
+        else
+        {
+            // XNNPACK Delegate
+            auto xnnpack_options = TfLiteXNNPackDelegateOptionsDefault();
+            xnnpack_options.num_threads = num_threads;
+            std::unique_ptr<TfLiteDelegate, decltype(&TfLiteXNNPackDelegateDelete)>
+                xnnpack_delegate(
+                    TfLiteXNNPackDelegateCreate(&xnnpack_options),
+                    TfLiteXNNPackDelegateDelete);
+            status = this->interpreter_->ModifyGraphWithDelegate(std::move(xnnpack_delegate));
+            if (status != TfLiteStatus::kTfLiteOk)
+            {
+                std::string msg = "Failed to ModifyGraphWithDelegate.";
+                throw std::runtime_error(msg.c_str());
+            }
         }
 
         // // GPU Delegate
@@ -138,10 +172,11 @@ namespace yolox_cpp
             generate_grids_and_stride(this->input_w_, this->input_h_, this->strides_, this->grid_strides_);
         }
     }
+
     YoloXTflite::~YoloXTflite()
     {
-        TfLiteXNNPackDelegateDelete(this->delegate_);
     }
+
     std::vector<Object> YoloXTflite::inference(const cv::Mat &frame)
     {
         // preprocess

@@ -18,6 +18,7 @@ option(YOLOX_USE_OPENVINO    "Use OpenVINO"  OFF)
 option(YOLOX_USE_TENSORRT    "Use TensorRT"  OFF)
 option(YOLOX_USE_ONNXRUNTIME "Use ONNXRuntime"  OFF)
 option(YOLOX_USE_TFLITE      "Use tflite"  OFF)
+option(YOLOX_USE_ARMNN       "Use ArmNN with tflite"  OFF)
 option(JETSON                "Use Jetson"  OFF)
 
 if(JETSON)
@@ -68,6 +69,16 @@ if(YOLOX_USE_TFLITE)
     ${ABSEIL_CPP_ICLUDE_DIR}
     ${FLATBUFFERS_INCLUDE_DIR}
   )
+  if (YOLOX_USE_ARMNN)
+    set(TFLITE_INCLUDES
+      ${TFLITE_INCLUDES}
+      ${ARMNN_DIR}/include
+      ${ARMNN_DIR}/include/armnn
+      ${ARMNN_DIR}/include/armnnDelegate
+      ${ARMNN_DIR}/include/armnnUtils
+    )
+    set(TARGET_LIBS ${TARGET_LIBS} ${ARMNN_DIR}/delegate/libarmnnDelegate.so)
+  endif()
   set(TARGET_LIBS ${TARGET_LIBS} ${TFLITE_LIB_PATH}/libtensorflow-lite.so)
 endif()
 
